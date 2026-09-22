@@ -2,6 +2,16 @@
 
 Automated deployment kit and configuration files for multi-station local AI architecture.
 
+## 📚 Online Documentation (Accès Direct Sans Obsidian)
+
+Access full, pre-formatted documentation directly online from any web browser or terminal:
+
+1. 📖 **[Guide d'Installation From Scratch](documentation/3-From-Scratch-LocalAI-Setup.md)** : Pas-à-pas complet de A à Z pour nouvelle machine.
+2. 📖 **[Kit de Déploiement Automatisé](documentation/1-Automated-Deployment-Kit.md)** : Spécifications complètes des scripts et services systemd.
+3. 📖 **[Architecture Multi-Projets Docker & OpenCode](documentation/2-Docker-OpenCode-Multi-Projects-Setup.md)** : Configuration Docker Compose & `AGENTS.md` pour `flatfox`, `astra-monitor`, `pirates-bay`.
+
+---
+
 ## Features
 
 - **Official Docker Engine & Compose Setup:** Installs Docker Engine (`download.docker.com`), configures log rotation (`/etc/docker/daemon.json`), and sets user permissions/GPU passthrough.
@@ -18,6 +28,10 @@ Automated deployment kit and configuration files for multi-station local AI arch
 ```text
 local-ai-workstation-setup/
 ├── README.md                           <- Documentation
+├── documentation/                      <- Online Markdown Documentation Vault
+│   ├── 1-Automated-Deployment-Kit.md
+│   ├── 2-Docker-OpenCode-Multi-Projects-Setup.md
+│   └── 3-From-Scratch-LocalAI-Setup.md
 ├── setup-from-scratch.sh               <- All-in-One wrapper deployer script
 ├── setup.sh                            <- Automated system & Docker installer
 ├── setup-user.sh                       <- User session, OpenCode & optional Gemini key setup
@@ -93,4 +107,16 @@ bash setup-docker-projects.sh
 
 # Import on target machine (auto-detects Lemonade vs vLLM)
 ./backup-models.sh import /run/media/$USER/writable/LLM-backups/
+```
+
+### 📖 Reading Documentation in Terminal
+
+If you prefer reading documentation directly from terminal without a browser:
+
+```bash
+# Install glow (terminal markdown renderer)
+sudo snap install glow
+
+# Render From Scratch guide formatted in terminal
+glow documentation/3-From-Scratch-LocalAI-Setup.md
 ```
