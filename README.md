@@ -11,12 +11,14 @@ Automated deployment kit and configuration files for multi-station local AI arch
 - **Strict Key Isolation:** Gemini API Key is optional and strictly reserved for Hermes Agent (`~/.hermes/.env`). Open WebUI runs 100% locally and never sees or uses the Gemini API key.
 - **Automated Project Restoration & Dockerization:** Restores user projects (`zurich-rental-flatfox-agent`, `astra-monitor-plugin`, `pirates_bay_local_coding`), configures OpenCode CLI (`AGENTS.md`), and launches Docker Compose services.
 - **Offline USB Model Export/Import:** `backup-models.sh` enables offline model migration with auto-detection for space limits and engine target (Lemonade vs vLLM).
+- **All-in-One From Scratch Deployer:** `setup-from-scratch.sh` orchestrates the complete end-to-end setup in a single command.
 
 ## Repository Structure
 
 ```text
 local-ai-workstation-setup/
 ├── README.md                           <- Documentation
+├── setup-from-scratch.sh               <- All-in-One wrapper deployer script
 ├── setup.sh                            <- Automated system & Docker installer
 ├── setup-user.sh                       <- User session, OpenCode & optional Gemini key setup
 ├── setup-projects.sh                   <- GitHub CLI auth & project restoration
@@ -36,7 +38,23 @@ local-ai-workstation-setup/
 
 ## Quick Start / Usage
 
-### 1. System & Docker Installation (as root / sudo)
+### Option A: All-in-One From Scratch Deployer
+
+On a fresh machine, run everything in one command:
+
+```bash
+# Standard From Scratch Setup
+sudo ./setup-from-scratch.sh
+
+# From Scratch Setup with USB Model Import & Hermes Agent
+sudo ./setup-from-scratch.sh --with-hermes --usb-import /run/media/$USER/writable/LLM-backups/
+```
+
+---
+
+### Option B: Step-by-Step Modular Deployment
+
+#### 1. System & Docker Installation (as root / sudo)
 
 ```bash
 # Standard setup
@@ -46,25 +64,25 @@ sudo ./setup.sh
 sudo ./setup.sh --with-hermes
 ```
 
-### 2. User Session & OpenCode Setup (under user session)
+#### 2. User Session & OpenCode Setup (under user session)
 
 ```bash
 bash setup-user.sh
 ```
 
-### 3. Restore GitHub Repositories
+#### 3. Restore GitHub Repositories
 
 ```bash
 bash setup-projects.sh
 ```
 
-### 4. Deploy Dockerized Projects (`flatfox`, `astra-monitor`, `pirates-bay`)
+#### 4. Deploy Dockerized Projects (`flatfox`, `astra-monitor`, `pirates-bay`)
 
 ```bash
 bash setup-docker-projects.sh
 ```
 
-### 5. Offline USB Model Backup & Import
+#### 5. Offline USB Model Backup & Import
 
 ```bash
 # Local backup to ~/LLM-backups/
