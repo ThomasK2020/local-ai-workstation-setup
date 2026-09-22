@@ -4,7 +4,8 @@
 # ==============================================================================
 set -euo pipefail
 
-CACHE_DIR="/var/snap/lemonade-server/common/.cache/huggingface/hub"
+LEMONADE_CACHE="/var/snap/lemonade-server/common/.cache/huggingface/hub"
+VLLM_CACHE="/var/lib/ai-models/huggingface/hub"
 LOCAL_BACKUP_DIR="${HOME}/LLM-backups"
 
 usage() {
@@ -12,7 +13,7 @@ usage() {
     echo ""
     echo "Commands:"
     echo "  export <dest>   Copy LLM models to USB or external path (checks available space)"
-    echo "  import <src>    Import LLM models from USB into local Lemonade cache"
+    echo "  import <src>    Import LLM models from USB into local engine cache (Lemonade or vLLM)"
     echo "  sync-local      Backup local Lemonade cache to ${LOCAL_BACKUP_DIR}"
     exit 1
 }
@@ -46,7 +47,13 @@ case "${COMMAND}" in
     sync-local)
         echo "🚀 Syncing local Lemonade cache to ${LOCAL_BACKUP_DIR}..."
         mkdir -p "${LOCAL_BACKUP_DIR}"
-        sudo rsync -avLP --human-readable "${CACHE_DIR}/" "${LOCAL_BACKUP_DIR}/"
+        
+        SRC_CACHE="${LEMONADE_CACHE}"
+        if [ ! -d "${SRC_CACHE}" ] && [ -d "${VLLM_CACHE}" ]; then
+            SRC_CACHE="${VLLM_CACHE}"
+        fi
+        
+        sudo rsync -avLP --human-readable "${SRC_CACHE}/" "${LOCAL_BACKUP_DIR}/"
         sudo chown -R "${USER}:${USER}" "${LOCAL_BACKUP_DIR}"
         echo "✅ Local backup updated in ${LOCAL_BACKUP_DIR}"
         ;;
@@ -59,7 +66,6 @@ case "${COMMAND}" in
         DEST_DIR="$2"
         echo "🔍 Evaluating models for export to ${DEST_DIR}..."
         
-        # Calculate total size
         TOTAL_SIZE_GB=58
         if check_space "${DEST_DIR}" "${TOTAL_SIZE_GB}"; then
             echo "✅ Sufficient space available. Exporting ALL models (~58 GB)..."
@@ -86,11 +92,25 @@ case "${COMMAND}" in
             usage
         fi
         SRC_DIR="$2"
-        echo "📥 Importing models from ${SRC_DIR} into Lemonade cache (${CACHE_DIR})..."
-        sudo mkdir -p "${CACHE_DIR}"
-        sudo rsync -avLP --human-readable "${SRC_DIR}/" "${CACHE_DIR}/"
-        sudo systemctl restart lemonade.service 2>/dev/null || true
-        echo "✅ Import completed & Lemonade service reloaded!"
+        
+        # Auto-detect whether target machine runs vLLM or Lemonade
+        if systemctl is-active --quiet vllm.service 2>/dev/null; then
+            TARGET_CACHE="${VLLM_CACHE}"
+            echo "📥 Machine target mode: vLLM Server (HP Z6)."
+            echo "📥 Importing models into vLLM cache (${TARGET_CACHE})..."
+            sudo mkdir -p "${TARGET_CACHE}"
+            sudo rsync -avLP --human-readable "${SRC_DIR}/" "${TARGET_CACHE}/"
+            sudo systemctl restart vllm.service 2>/dev/null || true
+            echo "✅ Import completed & vLLM service reloaded!"
+        else
+            TARGET_CACHE="${LEMONADE_CACHE}"
+            echo "📥 Machine target mode: Lemonade Workstation (HP Z2 Mini)."
+            echo "📥 Importing models into Lemonade cache (${TARGET_CACHE})..."
+            sudo mkdir -p "${TARGET_CACHE}"
+            sudo rsync -avLP --human-readable "${SRC_DIR}/" "${TARGET_CACHE}/"
+            sudo systemctl restart lemonade.service 2>/dev/null || true
+            echo "✅ Import completed & Lemonade service reloaded!"
+        fi
         ;;
 
     *)
