@@ -7,7 +7,7 @@ set -euo pipefail
 PROJECTS_DIR="${HOME}/Projects"
 mkdir -p "${PROJECTS_DIR}"
 
-echo "🔑 [1/3] Checking / Authenticating GitHub CLI (gh) & Git Identity..."
+echo "🔑 [1/3] Checking / Authenticating GitHub CLI (gh) & Git Helper..."
 if command -v gh &>/dev/null; then
     gh auth status || gh auth login --web -h github.com
 else
@@ -15,8 +15,12 @@ else
     sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages/githubcli-archive-keyring.gpg main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
     sudo apt update && sudo apt install gh -y
-    gh auth login
+    gh auth login --web -h github.com
 fi
+
+# Configure gh as git credential helper (resolves HTTPS password deprecation)
+gh auth setup-git
+echo "✅ GitHub CLI credential helper configured ('gh auth setup-git')"
 
 # Configure Git global user identity if missing
 if [ -z "$(git config --global user.name || true)" ]; then
