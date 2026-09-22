@@ -25,7 +25,7 @@ for arg in "$@"; do
 done
 
 echo "======================================================================"
-echo "📥 [Step 1/7] Syncing configuration files from GitHub repository"
+echo "📥 [Step 1/8] Syncing configuration files from GitHub repository"
 echo "======================================================================"
 if [ ! -d "${SETUP_DIR}/configs" ]; then
     echo "Config directory missing locally. Cloning setup repo from GitHub..."
@@ -37,9 +37,9 @@ fi
 echo "✅ Configuration files synchronized from GitHub!"
 
 echo "======================================================================"
-echo "🚀 [Step 2/7] System Dependencies & Optional Hermes Agent Setup"
+echo "🚀 [Step 2/8] System Dependencies & Optional Hermes Agent Setup"
 echo "======================================================================"
-apt-get update -y && apt-get install -y curl git jq python3 python3-pip python3-venv ufw mesa-vulkan-drivers
+apt-get update -y && apt-get install -y curl git jq python3 python3-pip python3-venv ufw mesa-vulkan-drivers ca-certificates gnupg
 
 if [ "$INSTALL_HERMES" = true ]; then
     echo "⚙️ Installing Hermes Agent as requested via CLI flag..."
@@ -50,14 +50,58 @@ else
 fi
 
 echo "======================================================================"
-echo "👥 [Step 3/7] User Accounts and System Permissions Setup"
+echo "🐳 [Step 3/8] Official Docker Engine & Docker Compose Setup"
+echo "======================================================================"
+# 1. Purge legacy or conflicting docker packages
+apt-get remove -y docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc || true
+
+# 2. Add Docker official GPG key & APT repository
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+chmod a+r /etc/apt/keyrings/docker.asc
+
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+  tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+apt-get update -y
+apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# 3. Configure Docker log-rotation daemon.json
+mkdir -p /etc/docker
+if [ -f "${SETUP_DIR}/configs/docker/daemon.json" ]; then
+    cp "${SETUP_DIR}/configs/docker/daemon.json" /etc/docker/daemon.json
+else
+    cat <<'EOF' > /etc/docker/daemon.json
+{
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "50m",
+    "max-file": "3"
+  }
+}
+EOF
+fi
+
+systemctl restart docker
+systemctl enable docker
+echo "✅ Official Docker Engine & Compose Plugin installed!"
+
+echo "======================================================================"
+echo "👥 [Step 4/8] User Accounts, Permissions & GPU Passthrough Setup"
 echo "======================================================================"
 groupadd -f ai-services
+groupadd -f docker
+
 id -u appmanager &>/dev/null || useradd -r -m -s /bin/bash appmanager
 id -u HP-AMD-LocalAI &>/dev/null || useradd -m -s /bin/bash -G sudo HP-AMD-LocalAI
 
-usermod -aG render,video,ai-services appmanager
-usermod -aG render,video,ai-services HP-AMD-LocalAI
+usermod -aG render,video,ai-services,docker appmanager
+usermod -aG render,video,ai-services,docker HP-AMD-LocalAI
+
+chown root:docker /var/run/docker.sock 2>/dev/null || true
+chmod 660 /var/run/docker.sock 2>/dev/null || true
 
 mkdir -p /var/lib/ai-models /var/lib/lemonade /home/appmanager/.local/bin
 chown -R appmanager:ai-services /var/lib/ai-models /var/lib/lemonade /home/appmanager
@@ -65,7 +109,7 @@ chmod -R 775 /var/lib/ai-models /var/lib/lemonade
 chmod g+s /var/lib/ai-models /var/lib/lemonade
 
 echo "======================================================================"
-echo "🎯 [Step 4/7] Inference Engine Selection (Lemonade vs vLLM)"
+echo "🎯 [Step 5/8] Inference Engine Selection (Lemonade vs vLLM)"
 echo "======================================================================"
 echo "1) Lemonade (HP Z2 Mini Workstations - AMD Strix Halo / Vulkan)"
 echo "2) vLLM (HP Z6 Server - Multi-GPU / High-Throughput Multi-User)"
@@ -94,7 +138,7 @@ else
 fi
 
 echo "======================================================================"
-echo "🌐 [Step 5/7] Open WebUI Configuration & Network Exposure"
+echo "🌐 [Step 6/8] Open WebUI Configuration & Network Exposure"
 echo "======================================================================"
 echo "1) Local access only (127.0.0.1)"
 echo "2) Secure Local Area Network access (192.168.x.x / 0.0.0.0)"
@@ -134,13 +178,13 @@ systemctl daemon-reload
 systemctl enable --now open-webui.service
 
 echo "======================================================================"
-echo "📥 [Step 6/7] Triggering LLM Model Downloads"
+echo "📥 [Step 7/8] Triggering LLM Model Downloads"
 echo "======================================================================"
 if [ -f "${SETUP_DIR}/download-models.sh" ]; then
     bash "${SETUP_DIR}/download-models.sh"
 fi
 
 echo "======================================================================"
-echo "🎉 [Step 7/7] System Setup Complete! Selected Engine: ${ENGINE}"
+echo "🎉 [Step 8/8] System Setup Complete! Selected Engine: ${ENGINE}"
 echo "Run 'bash setup-user.sh' under HP-AMD-LocalAI user session."
 echo "======================================================================"
