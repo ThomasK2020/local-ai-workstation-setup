@@ -26,7 +26,7 @@ fi
 
 cat <<EOF > ~/.hermes/.env
 GEMINI_API_KEY=${GEMINI_KEY}
-OBSIDIAN_VAULT_PATH=/home/HP-AMD-LocalAI/Documents/ThomasKRemoteVault
+OBSIDIAN_VAULT_PATH=${HOME}/Documents/ThomasKRemoteVault
 EOF
 chmod 600 ~/.hermes/.env
 

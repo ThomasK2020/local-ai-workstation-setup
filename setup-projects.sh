@@ -4,7 +4,7 @@
 # ==============================================================================
 set -euo pipefail
 
-PROJECTS_DIR="/home/HP-AMD-LocalAI/Projects"
+PROJECTS_DIR="${HOME}/Projects"
 mkdir -p "${PROJECTS_DIR}"
 
 echo "🔑 [1/3] Checking / Authenticating GitHub CLI (gh)..."
