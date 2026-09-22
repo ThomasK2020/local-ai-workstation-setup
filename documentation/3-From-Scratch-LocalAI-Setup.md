@@ -44,16 +44,33 @@ last_updated: 2026-09-22 22:48:50 CEST
 
 ---
 
-## 🛠️ Étape 1 : Clonage du Dépôt Central & Installation Système Root (`setup.sh`)
+## 🛠️ Étape 0 : Authentification GitHub CLI (`gh`) & Clonage Initial
 
-Sur la machine fraîchement installée, ouvrez un terminal et lancez la séquence d'installation root :
+Depuis août 2021, GitHub n'accepte plus les mots de passe de compte pour les opérations Git en HTTPS. Sur une machine neuve, la toute première étape consiste à installer `gh` et à configurer le credential helper Git :
 
 ```bash
-# 1. Clonage du dépôt centralisé de déploiement GitHub
-git clone https://github.com/ThomasK2020/local-ai-workstation-setup.git
-cd local-ai-workstation-setup
+# 1. Installation de GitHub CLI si absent
+sudo apt update && sudo apt install -y gh
 
-# 2. Exécution du script d'installation système principal
+# 2. Authentification interactive sur votre compte GitHub (ThomasK2020)
+gh auth login
+# -> Sélectionner : GitHub.com -> HTTPS -> Authentification via le navigateur
+
+# 3. Configuration de gh comme gestionnaire d'identifiants Git HTTPS
+gh auth setup-git
+
+# 4. Clonage du dépôt centralisé de déploiement
+gh repo clone ThomasK2020/local-ai-workstation-setup
+cd local-ai-workstation-setup
+```
+
+---
+
+## 🛠️ Étape 1 : Lancement de l'Installation Système Root (`setup.sh`)
+
+Une fois le dépôt cloné et le dossier ouvert :
+
+```bash
 # Option A : Installation standard (Recommandée)
 sudo ./setup.sh
 
