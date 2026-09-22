@@ -1,0 +1,15 @@
+[Unit]
+Description=Open WebUI Web Interface
+After=network.target lemonade.service vllm.service
+
+[Service]
+Type=simple
+User=appmanager
+Group=ai-services
+WorkingDirectory=/home/appmanager
+ExecStart=/home/appmanager/.local/bin/start-open-webui.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

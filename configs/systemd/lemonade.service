@@ -1,0 +1,16 @@
+[Unit]
+Description=Lemonade Local AI Inference Engine
+After=network.target
+
+[Service]
+Type=simple
+User=appmanager
+Group=ai-services
+Environment=GGML_VULKAN_DEVICE=0
+Environment=LEMONADE_CACHE_DIR=/var/lib/ai-models
+ExecStart=/usr/local/bin/lemonade server --port 13305
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

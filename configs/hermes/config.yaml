@@ -1,0 +1,17 @@
+model: lemonade/Gemma-4-12B-it-GGUF
+provider: lemonade
+context_length: 65536
+reasoning_effort: medium
+redact_secrets: true
+
+providers:
+  lemonade:
+    base_url: http://localhost:13306/v1
+    api_key: lemonade
+
+aliases:
+  gemma: lemonade/Gemma-4-12B-it-GGUF
+  gemma31: lemonade/Gemma-4-31B-it-GGUF
+  coder: lemonade/Qwen3-Coder-30B-A3B-Instruct-GGUF
+  qwen27: lemonade/Qwen3.6-27B-GGUF
+  deepseek: lemonade/DeepSeek-Qwen3-8B-GGUF

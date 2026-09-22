@@ -1,0 +1,14 @@
+[Unit]
+Description=vLLM High-Throughput Inference Server
+After=network.target nvidia-persistenced.service
+
+[Service]
+Type=simple
+User=appmanager
+Group=ai-services
+ExecStart=/usr/local/bin/vllm serve Qwen/Qwen2.5-Coder-32B-Instruct --host 0.0.0.0 --port 8000 --gpu-memory-utilization 0.90 --enable-prefix-caching
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
