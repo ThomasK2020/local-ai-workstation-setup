@@ -7,7 +7,7 @@ set -euo pipefail
 PROJECTS_DIR="${HOME}/Projects"
 mkdir -p "${PROJECTS_DIR}"
 
-echo "🔑 [1/3] Checking / Authenticating GitHub CLI (gh)..."
+echo "🔑 [1/3] Checking / Authenticating GitHub CLI (gh) & Git Identity..."
 if command -v gh &>/dev/null; then
     gh auth status || gh auth login --web -h github.com
 else
@@ -16,6 +16,17 @@ else
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages/githubcli-archive-keyring.gpg main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
     sudo apt update && sudo apt install gh -y
     gh auth login
+fi
+
+# Configure Git global user identity if missing
+if [ -z "$(git config --global user.name || true)" ]; then
+    git config --global user.name "Thomas Krotkine"
+    echo "👤 Git global user.name set to 'Thomas Krotkine'"
+fi
+
+if [ -z "$(git config --global user.email || true)" ]; then
+    git config --global user.email "thomas.krotkine@gmail.com"
+    echo "📧 Git global user.email set to 'thomas.krotkine@gmail.com'"
 fi
 
 echo "📦 [2/3] Cloning & Restoring GitHub Repositories..."
