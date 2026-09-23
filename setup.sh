@@ -128,10 +128,15 @@ groupadd -f ai-services
 groupadd -f docker
 
 id -u appmanager &>/dev/null || useradd -r -m -s /bin/bash appmanager
-id -u HP-AMD-LocalAI &>/dev/null || useradd -m -s /bin/bash -G sudo HP-AMD-LocalAI
 
-usermod -aG render,video,ai-services,docker appmanager
-usermod -aG render,video,ai-services,docker HP-AMD-LocalAI
+# Dynamically add calling user and all user variants to docker & GPU groups
+REAL_USER="${SUDO_USER:-$LOGNAME}"
+for u in "$REAL_USER" "hp-amd-localai" "HP-AMD-LocalAI" "appmanager"; do
+    if id -u "$u" &>/dev/null; then
+        usermod -aG render,video,ai-services,docker "$u"
+        echo "✅ User '$u' added to render, video, ai-services, and docker groups!"
+    fi
+done
 
 chown root:docker /var/run/docker.sock 2>/dev/null || true
 chmod 660 /var/run/docker.sock 2>/dev/null || true
@@ -194,6 +199,12 @@ fi
 
 # Note: Open WebUI is ONLY connected to local inference engine.
 # Gemini API Key is NEVER passed or exposed to Open WebUI.
+echo "🌐 Installing Open WebUI package in dedicated virtualenv..."
+mkdir -p /home/appmanager/openwebui-venv
+python3 -m venv /home/appmanager/openwebui-venv
+/home/appmanager/openwebui-venv/bin/pip install --upgrade pip
+/home/appmanager/openwebui-venv/bin/pip install open-webui
+
 cat <<EOF > /home/appmanager/.local/bin/start-open-webui.sh
 #!/usr/bin/env bash
 export WEBUI_HOST="${WEBUI_HOST}"
@@ -201,7 +212,7 @@ export WEBUI_PORT="8080"
 export WEBUI_SECRET_KEY="${WEBUI_SECRET}"
 export OPENAI_API_BASE_URL="${OPENWEBUI_OPENAI_URL}"
 export CORS_ALLOW_ORIGIN="*"
-exec open-webui serve
+exec /home/appmanager/openwebui-venv/bin/open-webui serve
 EOF
 
 chmod +x /home/appmanager/.local/bin/start-open-webui.sh
