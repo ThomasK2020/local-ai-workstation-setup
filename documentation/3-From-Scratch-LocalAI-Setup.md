@@ -238,9 +238,31 @@ python3 login_flatfox_interactive.py
 docker compose up -d --build
 ```
 
-### C. Moteur Lemonade ne voit pas les modèles importés
+### C. Diagnostic & Solution : Lemonade (Vérification & Redémarrage)
+
+#### 1. Nom exact du service Snap Lemonade
+Sous Ubuntu/Snap, le service système ne s'appelle pas `lemonade.service`, mais **`snap.lemonade-server.daemon.service`**.
 ```bash
-sudo systemctl restart lemonade.service
-# Vérifier la liste des modèles reconnus
-curl -s http://localhost:13305/v1/models | jq .
+# Vérification du statut du service Snap Lemonade
+systemctl status snap.lemonade-server.daemon.service
+
+# Redémarrage du service Snap Lemonade si inactif
+sudo snap restart lemonade-server
 ```
+
+#### 2. Test d'inférence en direct (HTTP 200 & Vitesse Tokens/sec)
+Tester si le serveur Lemonade répond correctement sur le port `13305` (API OpenAI) ou `13306` (Proxy OpenCode) :
+```bash
+# Tester la liste des modèles reconnus par Lemonade
+curl -s http://localhost:13305/v1/models | jq .
+
+# Tester l'inférence en direct avec Gemma 4 12B
+curl -s http://localhost:13305/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "Gemma-4-12B-it-GGUF",
+    "messages": [{"role": "user", "content": "Reply with ONE word: ONLINE"}],
+    "max_tokens": 10
+  }' | jq .
+```
+*Signature attendue :* Statut `200 OK`, réponse générée et métrique `predicted_per_second` > 20 tokens/sec sous Vulkan RADV sur APU Strix Halo.
