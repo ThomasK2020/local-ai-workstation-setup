@@ -41,12 +41,21 @@ if [ ! -d "zurich-rental-flatfox-agent" ]; then
     git clone https://github.com/ThomasK2020/zurich-rental-flatfox-agent.git
 fi
 
+if [ ! -d "tokenwatcher-topbar" ]; then
+    echo "Cloning Astra Monitor / TokenWatcher TopBar..."
+    git clone https://github.com/ThomasK2020/tokenwatcher-topbar.git
+fi
+
 if [ ! -d "pirates_bay_local_coding" ]; then
     echo "Initializing Pirates Bay workspace..."
     mkdir -p pirates_bay_local_coding
 fi
 
-echo "📝 [3/3] Setting up Python virtual environment for Flatfox Agent..."
+echo "📝 [3/3] Setting up Python virtual environment & Astra Monitor plugin..."
+if [ -d "tokenwatcher-topbar" ]; then
+    echo "Installing TokenWatcher / Astra TopBar extension and daemon..."
+    (cd tokenwatcher-topbar && bash ./install.sh)
+fi
 if [ -d "zurich-rental-flatfox-agent" ]; then
     cd zurich-rental-flatfox-agent
     python3 -m venv venv
