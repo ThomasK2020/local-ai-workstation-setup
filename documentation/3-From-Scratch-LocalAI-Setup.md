@@ -15,12 +15,12 @@ tags:
   - llm-models
   - security
 date: 2026-09-22
-last_updated: 2026-09-22 22:48:50 CEST
+last_updated: 2026-09-23 08:20:31 CEST
 ---
 
 # 🚀 Guide d'Installation From Scratch — Local AI Workstation Architecture
 
-**Dernière mise à jour :** 22 Septembre 2026 à 22:48 CEST  
+**Dernière mise à jour :** 23 Septembre 2026 à 08:20 CEST  
 
 > Ce document fournit le pas-à-pas intégral pour installer et configurer **à partir de zéro (from scratch)** une nouvelle station de travail individuelle (HP Z2 Mini APU Strix Halo / Vulkan) ou un serveur central (HP Z6 Multi-GPU) sur l'infrastructure local AI. Il orchestre l'installation du moteur d'inférence, du moteur Docker officiel, d'Open WebUI, d'Hermes Agent, d'OpenCode CLI et des conteneurs applicatifs multi-projets.
 
@@ -166,12 +166,23 @@ bash setup-user.sh
 
 ### 🔄 Restauration des Données Personnelles Hermes (Mémoires, Skills & Conversations)
 
-Si vous souhaitez restaurer l'intégralité de vos mémoires (`MEMORY.md`, `USER.md`), de vos compétences personnalisées (`skills/`), de vos configurations et de votre historique de conversation sur une machine où Hermes est déjà installé :
+Si vous souhaitez restaurer l'intégralité de vos mémoires (`MEMORY.md`, `USER.md`), de vos compétences personnalisées (`skills/`), de vos configurations et de votre historique de conversation sur une nouvelle machine :
 
+#### 1. Comment obtenir le script `Deploy-Hermes-Perso-data.sh` ?
+Le script est directement présent à la racine des deux dépôts GitHub :
+* Dans le dépôt de déploiement : `local-ai-workstation-setup/Deploy-Hermes-Perso-data.sh`
+* Dans votre dépôt privé de données : `TK-Hermes-data/Deploy-Hermes-Perso-data.sh`
+
+#### 2. Procédure de Restauration Pas-à-Pas :
 ```bash
-# 1. Assurez-vous que la clé USB (contenant le dossier Hermes-data/) est branchée
-# 2. Exécutez le script de restauration hybride GitHub + USB :
+# A. Assurez-vous que la clé USB (contenant le dossier Hermes-data/) est branchée
+
+# B. Si vous êtes dans le répertoire local-ai-workstation-setup, lancez directement :
 ./Deploy-Hermes-Perso-data.sh restore
+
+# C. Alternativement, clonez votre dépôt privé de données et lancez le script :
+gh repo clone ThomasK2020/TK-Hermes-data ~/TK-Hermes-data
+bash ~/TK-Hermes-data/Deploy-Hermes-Perso-data.sh restore
 ```
 
 #### Ce que réalise la restauration :

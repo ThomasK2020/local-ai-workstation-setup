@@ -78,7 +78,9 @@ export_data() {
     git clone "${REPO_URL}" "${TMP_REPO}"
 
     cd "${TMP_REPO}"
-    git pull origin main || true
+    git config user.name "Thomas Krotkine"
+    git config user.email "thomas.krotkine@gmail.com"
+    git checkout -b main 2>/dev/null || true
 
     cp "${HERMES_DIR}/config.yaml" ./ 2>/dev/null || true
     cp "${HERMES_DIR}/.env" ./ 2>/dev/null || true
