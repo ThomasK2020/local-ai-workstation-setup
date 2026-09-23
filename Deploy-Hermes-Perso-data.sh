@@ -21,7 +21,7 @@ find_usb_data_dir() {
     echo "🔍 Looking for USB drive containing '/Hermes-data/' folder..."
     
     local usb_path=""
-    for mount_point in /media/*/* /run/media/*/* /run/media/* /mnt/* /mnt; do
+    for mount_point in /media/*/* /run/media/*/* /run/media/${USER:-$LOGNAME}/* /media/${USER:-$LOGNAME}/* /run/media/* /mnt/* /mnt; do
         if [ -d "${mount_point}/Hermes-data" ]; then
             usb_path="${mount_point}/Hermes-data"
             break
@@ -43,7 +43,7 @@ find_usb_data_dir() {
     if [ -z "${usb_path}" ] || [ ! -d "${usb_path}" ]; then
         echo ""
         echo "⚠️ USB drive with 'Hermes-data' folder not automatically detected."
-        read -rp "👉 Please insert your USB drive and enter its mount path (e.g. /run/media/thomas/writable): " USER_INPUT_PATH
+        read -rp "👉 Please insert your USB drive and enter its mount path (e.g. /run/media/${USER:-$LOGNAME}/writable): " USER_INPUT_PATH
         if [ -d "${USER_INPUT_PATH}" ]; then
             usb_path="${USER_INPUT_PATH}/Hermes-data"
             mkdir -p "${usb_path}"
