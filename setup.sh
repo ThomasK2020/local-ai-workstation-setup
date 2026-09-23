@@ -41,11 +41,18 @@ echo "🚀 [Step 2/8] System Dependencies, Node.js 22 LTS & Optional Hermes"
 echo "======================================================================"
 apt-get update -y && apt-get install -y curl git jq python3 python3-pip python3-venv ufw mesa-vulkan-drivers ca-certificates gnupg
 
-# Install Node.js 22 LTS system-wide via NodeSource APT (guarantees node/npm in PATH for Desktop GUI & systemd)
-echo "🟢 Installing Node.js 22 LTS system-wide via NodeSource..."
-curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-apt-get install -y nodejs
-echo "✅ Node.js $(node -v) & npm $(npm -v) installed globally in /usr/bin!"
+# Purge legacy or conflicting nodejs/npm packages first
+apt-get remove -y nodejs npm libnode-dev || true
+
+# Install Node.js 22 LTS system-wide via official NodeSource APT repository
+echo "🟢 Installing Node.js 22 LTS system-wide via official NodeSource APT..."
+mkdir -p /etc/apt/keyrings
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg --yes
+echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list > /dev/null
+
+apt-get update -y
+apt-get install -y nodejs build-essential
+echo "✅ Official APT Node.js $(node -v) & npm $(npm -v) installed in $(which node)!"
 
 # Export ~/.local/bin globally for all desktop GUI sessions
 cat <<'EOF' > /etc/profile.d/10-local-bin.sh
