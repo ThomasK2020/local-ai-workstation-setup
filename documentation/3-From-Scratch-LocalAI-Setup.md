@@ -196,6 +196,20 @@ cd ~/local-ai-workstation-setup
 * **Depuis GitHub (`ThomasK2020/TK-Hermes-data`) :** Restaure vos configurations (`config.yaml`), votre clé Gemini isolée (`.env`), vos notes de mémoire (`MEMORY.md`, `USER.md`), vos automatisations (`cron/`, `plugins/`) et vos bases `projects.db` / `kanban.db`.
 * **Depuis la Clé USB (`/Hermes-data/`) :** Restaure et décompresse votre base de conversation `state.db` et l'ensemble de vos compétences `skills/` (~643 Mo) après vérification d'intégrité `gzip -t`.
 
+#### D. Vérification de l'historique des sessions & configuration du modèle
+
+1. **Valider la reprise de l'historique des sessions :**
+   ```bash
+   hermes sessions stats
+   ```
+   > ⚠️ **Important :** Le dépôt GitHub (`TK-Hermes-data`) ne synchronise que la configuration et la mémoire vive (`.env`, `config.yaml`, `memories/`). Les conversations et l'historique complet résident exclusivement dans **`state.db`** (restauré depuis la clé USB via `./Deploy-Hermes-Perso-data.sh restore` ou via `hermes import`). Si `hermes sessions stats` affiche 0 session, reconnectez la clé USB et relancez la restauration de la base.
+
+2. **Définir Gemini 3.6 par défaut (optionnel) :**
+   ```bash
+   hermes config set model.provider gemini
+   hermes config set model.default gemini-3.6-flash
+   ```
+
 ---
 
 ## 📦 Étape 4 : Restauration des Projets GitHub & Authentification (`setup-projects.sh`)
