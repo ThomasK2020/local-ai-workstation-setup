@@ -122,7 +122,7 @@ restore_data() {
     # 1. Pull Lightweight Configs & Memories from GitHub
     echo "🌐 Cloning/Pulling configs and memories from GitHub..."
     TMP_REPO=$(mktemp -d)
-    gh repo clone ThomasK2020/TK-Hermes-data "${TMP_REPO}"
+    gh repo clone ThomasK2020/TK-Hermes-data "${TMP_REPO}" 2>/dev/null || git clone "${REPO_URL}" "${TMP_REPO}"
 
     cp -r "${TMP_REPO}/"* "${HERMES_DIR}/" 2>/dev/null || true
     cp -r "${TMP_REPO}/."* "${HERMES_DIR}/" 2>/dev/null || true

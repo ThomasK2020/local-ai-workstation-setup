@@ -177,18 +177,15 @@ Le script est directement présent à la racine des deux dépôts GitHub :
 ```bash
 # A. Assurez-vous que la clé USB (contenant le dossier Hermes-data/) est branchée
 
-# B. Commande Tout-en-Un pour mettre à jour TOUS les scripts locaux depuis GitHub :
-(cd ~/local-ai-workstation-setup && git pull origin main) && (cd ~/TK-Hermes-data 2>/dev/null && git pull origin main || true)
+# B. Mettre à jour le dépôt de setup local :
+(cd ~/local-ai-workstation-setup && git pull origin main)
 
-# C. Lancer la restauration hybride GitHub + USB :
+# C. Lancer la restauration hybride (Télécharge automatiquement TK-Hermes-data de façon transparente) :
 cd ~/local-ai-workstation-setup
 ./Deploy-Hermes-Perso-data.sh restore
-
-# D. Alternativement (si TK-Hermes-data est cloné séparément) :
-cd ~/TK-Hermes-data 2>/dev/null || gh repo clone ThomasK2020/TK-Hermes-data ~/TK-Hermes-data
-cd ~/TK-Hermes-data && git pull origin main
-bash Deploy-Hermes-Perso-data.sh restore
 ```
+
+> 💡 **Remarque :** Le script `./Deploy-Hermes-Perso-data.sh restore` télécharge automatiquement les données depuis votre dépôt privé GitHub `ThomasK2020/TK-Hermes-data` dans un répertoire temporaire. **Vous n'avez pas besoin d'avoir le dossier `~/TK-Hermes-data` pré-existant ou cloné manuellement sur la machine !**
 
 #### Ce que réalise la restauration :
 * **Depuis GitHub (`ThomasK2020/TK-Hermes-data`) :** Restaure vos configurations (`config.yaml`), votre clé Gemini isolée (`.env`), vos notes de mémoire (`MEMORY.md`, `USER.md`), vos automatisations (`cron/`, `plugins/`) et vos bases `projects.db` / `kanban.db`.
