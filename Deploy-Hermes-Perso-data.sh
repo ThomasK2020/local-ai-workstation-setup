@@ -21,32 +21,41 @@ find_usb_data_dir() {
     echo "🔍 Looking for USB drive containing '/Hermes-data/' folder..."
     
     local usb_path=""
-    for mount_point in /media/*/* /run/media/*/* /run/media/${USER:-$LOGNAME}/* /media/${USER:-$LOGNAME}/* /run/media/* /mnt/* /mnt; do
-        if [ -d "${mount_point}/Hermes-data" ]; then
-            usb_path="${mount_point}/Hermes-data"
+    
+    # Broad multi-level search for existing Hermes-data directories
+    for candidate in \
+        /run/media/*/*/LLM-backups/Hermes-data \
+        /media/*/*/LLM-backups/Hermes-data \
+        /run/media/*/*/Hermes-data \
+        /media/*/*/Hermes-data \
+        /run/media/*/* \
+        /media/*/* \
+        /mnt/LLM-backups/Hermes-data \
+        /mnt/Hermes-data \
+        "${HOME}/LLM-backups/Hermes-data"; do
+        if [ -d "${candidate}" ] && [ "$(basename "${candidate}")" == "Hermes-data" ]; then
+            usb_path="${candidate}"
             break
-        elif [ -d "${mount_point}/LLM-backups/Hermes-data" ]; then
-            usb_path="${mount_point}/LLM-backups/Hermes-data"
+        elif [ -d "${candidate}/LLM-backups/Hermes-data" ]; then
+            usb_path="${candidate}/LLM-backups/Hermes-data"
             break
-        elif [ -d "${mount_point}/writable/LLM-backups/Hermes-data" ]; then
-            usb_path="${mount_point}/writable/LLM-backups/Hermes-data"
+        elif [ -d "${candidate}/Hermes-data" ]; then
+            usb_path="${candidate}/Hermes-data"
             break
         fi
     done
-
-    # Fallback to local NVMe backup folder if USB is not mounted
-    if [ -z "${usb_path}" ] && [ -d "${HOME}/LLM-backups" ]; then
-        usb_path="${HOME}/LLM-backups/Hermes-data"
-        mkdir -p "${usb_path}"
-    fi
 
     if [ -z "${usb_path}" ] || [ ! -d "${usb_path}" ]; then
         echo ""
         echo "⚠️ USB drive with 'Hermes-data' folder not automatically detected."
         read -rp "👉 Please insert your USB drive and enter its mount path (e.g. /run/media/${USER:-$LOGNAME}/writable): " USER_INPUT_PATH
-        if [ -d "${USER_INPUT_PATH}" ]; then
+        if [ -d "${USER_INPUT_PATH}/LLM-backups/Hermes-data" ]; then
+            usb_path="${USER_INPUT_PATH}/LLM-backups/Hermes-data"
+        elif [ -d "${USER_INPUT_PATH}/Hermes-data" ]; then
             usb_path="${USER_INPUT_PATH}/Hermes-data"
-            mkdir -p "${usb_path}"
+        elif [ -d "${USER_INPUT_PATH}" ]; then
+            usb_path="${USER_INPUT_PATH}/Hermes-data"
+            mkdir -p "${usb_path}" 2>/dev/null || sudo mkdir -p "${usb_path}" 2>/dev/null || true
         else
             echo "❌ Error: Directory '${USER_INPUT_PATH}' does not exist!"
             exit 1
