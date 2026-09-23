@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# AUTOMATED MULTI-PROJECT DOCKER & OPENCODE SETUP SCRIPT
+# AUTOMATED MULTI-PROJECT DOCKER & OPENCODE SETUP SCRIPT (23-09-26)
 # ==============================================================================
 set -euo pipefail
 
