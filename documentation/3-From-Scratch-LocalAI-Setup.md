@@ -246,7 +246,7 @@ bash setup-projects.sh
 ```
 
 ### Ce que réalise `setup-projects.sh` :
-1. **Authentification GitHub CLI :** Vérifie `gh auth status` ou déclenche `gh auth login` interactif.
+1. **Vérification GitHub CLI & Clonage Public HTTPS :** Vérifie `gh auth status` pour activer `gh auth setup-git` si disponible, sinon clone directement les dépôts publics en HTTPS sans exiger d'authentification interactive.
 2. **Espace de Travail Dynamique :** Crée le répertoire `${HOME}/Projects/`.
 3. **Clonage des Dépôts :** Clone automatiquement `zurich-rental-flatfox-agent`, `tokenwatcher-topbar` (Astra Monitor Plugin) et initialise `pirates_bay_local_coding`.
 4. **Environnement Virtuel Python & Plugin GNOME :** Crée le `venv` local pour le projet Flatfox et déploie le daemon et l'extension GNOME Shell Astra / TokenWatcher TopBar via `./install.sh`.
