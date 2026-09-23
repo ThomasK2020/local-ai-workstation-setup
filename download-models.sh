@@ -5,6 +5,12 @@
 set -euo pipefail
 
 LEMONADE_API="http://localhost:13305"
+LEMONADE_CACHE="/var/snap/lemonade-server/common/.cache"
+
+# Ensure write permissions on Lemonade cache directory
+if [ -d "${LEMONADE_CACHE}" ]; then
+    sudo chmod -R 777 "${LEMONADE_CACHE}" 2>/dev/null || true
+fi
 
 echo "⏳ Checking Lemonade server availability..."
 until curl -s "${LEMONADE_API}/v1/models" > /dev/null 2>&1; do

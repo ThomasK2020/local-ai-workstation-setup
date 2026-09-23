@@ -117,6 +117,7 @@ case "${COMMAND}" in
             echo "📥 Importing models into Lemonade cache (${TARGET_CACHE})..."
             sudo mkdir -p "${TARGET_CACHE}"
             sudo rsync -avLP --human-readable "${SRC_DIR}/" "${TARGET_CACHE}/"
+            sudo chmod -R 777 "${TARGET_CACHE}" 2>/dev/null || true
             sudo systemctl restart snap.lemonade-server.daemon.service 2>/dev/null || sudo systemctl restart lemonade.service 2>/dev/null || sudo snap restart lemonade-server 2>/dev/null || true
             echo "✅ Import completed & Lemonade service reloaded!"
         fi

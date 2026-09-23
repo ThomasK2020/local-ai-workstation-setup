@@ -182,6 +182,11 @@ else
 
     # Start native Snap Lemonade daemon
     snap start lemonade-server.daemon 2>/dev/null || systemctl enable --now snap.lemonade-server.daemon.service 2>/dev/null || true
+    
+    # Ensure Lemonade cache directory exists with proper write permissions
+    mkdir -p /var/snap/lemonade-server/common/.cache
+    chmod -R 777 /var/snap/lemonade-server/common/.cache 2>/dev/null || true
+
     OPENWEBUI_OPENAI_URL="http://localhost:13305/v1"
 fi
 

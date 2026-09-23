@@ -303,7 +303,7 @@ Cette section réunit l'ensemble des procédures relatives au cycle de vie des m
 
 ### 7.1 Téléchargement & Pré-chargement des Modèles (`download-models.sh`)
 
-Ce script déclenche le téléchargement automatisé des 5 modèles IA (~64.5 Go) via l'API locale Lemonade.
+Ce script déclenche le téléchargement automatisé des 5 modèles IA (~64.5 Go) via l'API locale Lemonade. Il initialise automatiquement les permissions du répertoire de cache Snap afin d'éviter les erreurs `Permission denied` lors de la création de répertoires ou de manifests Hugging Face.
 
 ```bash
 #!/usr/bin/env bash
@@ -313,12 +313,23 @@ Ce script déclenche le téléchargement automatisé des 5 modèles IA (~64.5 Go
 set -euo pipefail
 
 LEMONADE_API="http://localhost:13305"
+LEMONADE_CACHE="/var/snap/lemonade-server/common/.cache"
+
+# Ensure write permissions on Lemonade cache directory
+if [ -d "${LEMONADE_CACHE}" ]; then
+    sudo chmod -R 777 "${LEMONADE_CACHE}" 2>/dev/null || true
+fi
 
 echo "⏳ Checking Lemonade server availability..."
 until curl -s "${LEMONADE_API}/v1/models" > /dev/null 2>&1; do
     echo "Waiting for Lemonade server to start..."
     sleep 3
 done
+```
+
+> ⚠️ **Alerte de Sécurité & Surveillance des Permissions (`chmod 777`) :**  
+> L'application de permissions permissives (`777`) sur `/var/snap/lemonade-server/common/.cache` est requise pour assurer la compatibilité entre le démon Snap `lemonade-server` (exécuté dans un conteneur/confinement Snap sous `root`) et les requêtes/scripts exécutés par l'utilisateur courant (`hp-amd-localai`).  
+> **Avis de sécurité :** Ces permissions permettent à tout utilisateur local ou processus de la machine de lire, modifier ou supprimer le contenu du cache des modèles. Sur un système partagé ou exposé, veillez à restreindre l'accès à la machine et surveiller ce répertoire si nécessaire.
 
 echo "✅ Lemonade server is online!"
 echo "🚀 Triggering download of all 5 LLM models (~64.5 GB total)..."
