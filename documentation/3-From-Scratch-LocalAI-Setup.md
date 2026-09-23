@@ -15,12 +15,12 @@ tags:
   - llm-models
   - security
 date: 2026-09-22
-last_updated: 2026-09-23 08:27:22 CEST
+last_updated: 2026-09-23 08:35:10 CEST
 ---
 
 # 🚀 Guide d'Installation From Scratch — Local AI Workstation Architecture
 
-**Dernière mise à jour :** 23 Septembre 2026 à 08:27 CEST  
+**Dernière mise à jour :** 23 Septembre 2026 à 08:35 CEST  
 
 > Ce document fournit le pas-à-pas intégral pour installer et configurer **à partir de zéro (from scratch)** une nouvelle station de travail individuelle (HP Z2 Mini APU Strix Halo / Vulkan) ou un serveur central (HP Z6 Multi-GPU) sur l'infrastructure local AI. Il orchestre l'installation du moteur d'inférence, du moteur Docker officiel, d'Open WebUI, d'Hermes Agent, d'OpenCode CLI et des conteneurs applicatifs multi-projets.
 
@@ -177,8 +177,8 @@ Le script est directement présent à la racine des deux dépôts GitHub :
 ```bash
 # A. Assurez-vous que la clé USB (contenant le dossier Hermes-data/) est branchée
 
-# B. Mettre à jour tous les scripts locaux depuis GitHub :
-(cd ~/local-ai-workstation-setup && git pull origin main)
+# B. Commande Tout-en-Un pour mettre à jour TOUS les scripts locaux depuis GitHub :
+(cd ~/local-ai-workstation-setup && git pull origin main) && (cd ~/TK-Hermes-data 2>/dev/null && git pull origin main || true)
 
 # C. Lancer la restauration hybride GitHub + USB :
 cd ~/local-ai-workstation-setup
