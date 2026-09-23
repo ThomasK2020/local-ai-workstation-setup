@@ -39,6 +39,15 @@ if [ -f "${SETUP_DIR}/configs/hermes/config.yaml" ]; then
     cp "${SETUP_DIR}/configs/hermes/config.yaml" ~/.hermes/config.yaml
 fi
 
+# Fix permissions and install Desktop UI workspace dependencies if system Hermes is present
+if [ -d "/usr/local/lib/hermes-agent" ]; then
+    echo "📦 Configuring Hermes Desktop UI workspace permissions & dependencies..."
+    sudo chown -R "${USER}:${USER}" /usr/local/lib/hermes-agent 2>/dev/null || true
+    chmod -R 775 /usr/local/lib/hermes-agent 2>/dev/null || true
+    (cd /usr/local/lib/hermes-agent && npm ci) || true
+    echo "✅ Hermes Desktop UI dependencies ready!"
+fi
+
 echo "🤖 [2/3] Installing OpenCode CLI..."
 curl -fsSL https://opencode.ai/install.sh | bash || true
 
