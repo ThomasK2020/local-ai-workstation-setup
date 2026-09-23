@@ -153,13 +153,16 @@ if [ "$ENGINE_CHOICE" == "2" ]; then
     OPENWEBUI_OPENAI_URL="http://localhost:8000/v1"
 else
     ENGINE="lemonade"
-    echo "⚙️ Installing Lemonade engine for HP Z2 Mini Workstation..."
-    curl -fsSL https://lemonade-ai.com/install.sh | bash || true
-    if [ -f "${SETUP_DIR}/configs/systemd/lemonade.service" ]; then
-        cp "${SETUP_DIR}/configs/systemd/lemonade.service" /etc/systemd/system/lemonade.service
-    fi
+    echo "⚙️ Installing Lemonade engine via official Snap package..."
+    snap install lemonade-server || snap refresh lemonade-server || true
+    
+    # Clean up any legacy custom systemd service that caused restart loops
+    systemctl disable --now lemonade.service 2>/dev/null || true
+    rm -f /etc/systemd/system/lemonade.service
     systemctl daemon-reload
-    systemctl enable --now lemonade.service
+
+    # Start native Snap Lemonade daemon
+    snap start lemonade-server.daemon 2>/dev/null || systemctl enable --now snap.lemonade-server.daemon.service 2>/dev/null || true
     OPENWEBUI_OPENAI_URL="http://localhost:13305/v1"
 fi
 
