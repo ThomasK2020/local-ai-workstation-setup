@@ -21,18 +21,24 @@ find_usb_data_dir() {
     echo "🔍 Looking for USB drive containing '/Hermes-data/' folder..."
     
     local usb_path=""
-    for mount_point in /media/*/* /run/media/*/* /mnt/* /mnt; do
+    for mount_point in /media/*/* /run/media/*/* /run/media/* /mnt/* /mnt; do
         if [ -d "${mount_point}/Hermes-data" ]; then
             usb_path="${mount_point}/Hermes-data"
             break
-        elif [ -d "${mount_point}/LLM-backups" ] || [ -d "${mount_point}/writable" ]; then
-            usb_path="${mount_point}/Hermes-data"
-            mkdir -p "${usb_path}" 2>/dev/null || true
-            if [ -d "${usb_path}" ]; then
-                break
-            fi
+        elif [ -d "${mount_point}/LLM-backups/Hermes-data" ]; then
+            usb_path="${mount_point}/LLM-backups/Hermes-data"
+            break
+        elif [ -d "${mount_point}/writable/LLM-backups/Hermes-data" ]; then
+            usb_path="${mount_point}/writable/LLM-backups/Hermes-data"
+            break
         fi
     done
+
+    # Fallback to local NVMe backup folder if USB is not mounted
+    if [ -z "${usb_path}" ] && [ -d "${HOME}/LLM-backups" ]; then
+        usb_path="${HOME}/LLM-backups/Hermes-data"
+        mkdir -p "${usb_path}"
+    fi
 
     if [ -z "${usb_path}" ] || [ ! -d "${usb_path}" ]; then
         echo ""
