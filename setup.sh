@@ -10,6 +10,13 @@
 # ==============================================================================
 set -euo pipefail
 
+# Ensure script is executed as root/sudo
+if [ "$EUID" -ne 0 ]; then
+    echo "❌ Error: setup.sh requires root privileges to install system packages and Docker."
+    echo "👉 Please re-run with sudo: sudo ./setup.sh $@"
+    exit 1
+fi
+
 INSTALL_HERMES=false
 REPO_URL="https://github.com/ThomasK2020/local-ai-workstation-setup.git"
 SETUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

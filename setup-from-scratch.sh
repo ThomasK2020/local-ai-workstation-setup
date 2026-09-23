@@ -7,6 +7,13 @@
 # ==============================================================================
 set -euo pipefail
 
+# Ensure script is executed as root/sudo
+if [ "$EUID" -ne 0 ]; then
+    echo "❌ Error: setup-from-scratch.sh requires root privileges."
+    echo "👉 Please re-run with sudo: sudo ./setup-from-scratch.sh $@"
+    exit 1
+fi
+
 SETUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WITH_HERMES=false
 USB_PATH=""
