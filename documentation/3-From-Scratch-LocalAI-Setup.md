@@ -164,6 +164,20 @@ bash setup-user.sh
 2. **Installation OpenCode CLI :** Installe le binaire `opencode` via `https://opencode.ai/install.sh`.
 3. **Configuration Globale OpenCode :** Écrit `~/.config/opencode/config.json` configuré sur le modèle local `Qwen3-Coder-30B-A3B-Instruct-GGUF`.
 
+### 🔄 Restauration des Données Personnelles Hermes (Mémoires, Skills & Conversations)
+
+Si vous souhaitez restaurer l'intégralité de vos mémoires (`MEMORY.md`, `USER.md`), de vos compétences personnalisées (`skills/`), de vos configurations et de votre historique de conversation sur une machine où Hermes est déjà installé :
+
+```bash
+# 1. Assurez-vous que la clé USB (contenant le dossier Hermes-data/) est branchée
+# 2. Exécutez le script de restauration hybride GitHub + USB :
+./Deploy-Hermes-Perso-data.sh restore
+```
+
+#### Ce que réalise la restauration :
+* **Depuis GitHub (`ThomasK2020/TK-Hermes-data`) :** Restaure vos configurations (`config.yaml`), votre clé Gemini isolée (`.env`), vos notes de mémoire (`MEMORY.md`, `USER.md`), vos automatisations (`cron/`, `plugins/`) et vos bases `projects.db` / `kanban.db`.
+* **Depuis la Clé USB (`/Hermes-data/`) :** Restaure et décompresse votre base de conversation `state.db` et l'ensemble de vos compétences `skills/` (~643 Mo).
+
 ---
 
 ## 📦 Étape 4 : Restauration des Projets GitHub & Authentification (`setup-projects.sh`)
