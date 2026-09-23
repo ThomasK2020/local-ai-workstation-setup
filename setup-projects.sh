@@ -51,11 +51,22 @@ if [ ! -d "pirates_bay_local_coding" ]; then
     mkdir -p pirates_bay_local_coding
 fi
 
-echo "📝 [3/3] Setting up Python virtual environment & Astra Monitor plugin..."
+echo "📝 [3/3] Setting up Python virtual environment, Astra Monitor & TokenWatcher plugin..."
+echo "Installing GNOME extension tool (gnome-extensions-cli)..."
+python3 -m pip install --user --break-system-packages gnome-extensions-cli &>/dev/null || true
+export PATH="${HOME}/.local/bin:${PATH}"
+
+echo "Installing Astra Monitor GNOME Extension (monitor@astraext.github.io)..."
+gext install monitor@astraext.github.io &>/dev/null || true
+
 if [ -d "tokenwatcher-topbar" ]; then
     echo "Installing TokenWatcher / Astra TopBar extension and daemon..."
     (cd tokenwatcher-topbar && bash ./install.sh)
 fi
+
+echo "Enabling GNOME Shell extensions (TokenWatcher TopBar & Astra Monitor)..."
+gsettings set org.gnome.shell disable-user-extensions false 2>/dev/null || true
+gsettings set org.gnome.shell enabled-extensions "['tokenwatcher@thomas.local', 'monitor@astraext.github.io']" 2>/dev/null || true
 if [ -d "zurich-rental-flatfox-agent" ]; then
     cd zurich-rental-flatfox-agent
     python3 -m venv venv

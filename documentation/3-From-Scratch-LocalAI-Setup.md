@@ -161,11 +161,13 @@ Une fois le point de montage identifié (ex: `/run/media/$USER/writable/LLM-back
 
 ### Fonctionnement Interne d'Importation :
 * **Détection du Moteur :** Le script teste si `vllm.service` ou `lemonade.service` est actif.
-  - Sur **HP Z2 Mini (Lemonade)** : Importe les modèles directement dans `/var/snap/lemonade-server/common/.cache/huggingface/hub/` et recharge Lemonade.
+  - Sur **HP Z2 Mini (Lemonade)** : Importe les modèles directement dans `/var/snap/lemonade-server/common/.cache/huggingface/hub/` et réapplique les permissions `777` sur le cache pour autoriser le démon Snap Lemonade.
   - Sur **HP Z6 (vLLM)** : Importe les modèles dans le cache centralisé `/var/lib/ai-models/huggingface/hub/` et recharge vLLM.
 * **Auto-Scannage :** Au redémarrage du service, les modèles `.gguf` sont immédiatement disponibles hors-ligne dans Open WebUI et OpenCode.
 
-> 🌐 **Alternative 100% en ligne (sans clé USB) :** Si aucune clé USB n'est disponible, le script `download-models.sh` déclenche le téléchargement en ligne des 5 modèles via l'API Lemonade.
+> 🌐 **Alternative 100% en ligne (sans clé USB) :** Si aucune clé USB n'est disponible, le script `download-models.sh` déclenche le téléchargement en ligne des 5 modèles via l'API Lemonade (en appliquant automatiquement `chmod -R 777` sur le cache Lemonade).
+> 
+> ⚠️ **Avertissement de Sécurité (`chmod 777`) :** L'accès universel au dossier `/var/snap/lemonade-server/common/.cache` permet au démon Snap `lemonade-server` sous `root` d'écrire conjointement avec l'utilisateur local. Sur un environnement partagé, gardez à l'esprit que tout utilisateur local peut lire/modifier ce cache de modèles.
 
 ---
 
@@ -251,31 +253,38 @@ bash setup-projects.sh
 
 ---
 
-## 🖥️ Étape 4.1 : Installation & Configuration du Plugin Astra Monitor TopBar (`tokenwatcher-topbar`)
+## 🖥️ Étape 4.1 : Installation & Configuration d'Astra Monitor & Plugin TokenWatcher TopBar
 
-> **Note :** Le plugin Astra Monitor / TokenWatcher TopBar permet le suivi en temps réel des métriques d'agents LLM (Hermes Agent, OpenCode, Open WebUI, Lemonade) et de la VRAM GPU AMD Radeon directement dans le panneau supérieur GNOME Shell.
+> **Note :** Le plugin TokenWatcher TopBar et l'extension Astra Monitor permettent le suivi en temps réel des métriques d'agents LLM (Hermes Agent, OpenCode, Open WebUI, Lemonade) et du matériel (CPU, VRAM GPU AMD Radeon, RAM) directement dans le panneau supérieur GNOME Shell.
 
-Pour installer ou réinstaller manuellement le plugin Astra Monitor / TokenWatcher depuis son dépôt GitHub dédié :
+Pour installer ou réinstaller manuellement Astra Monitor et le plugin TokenWatcher :
 
 ```bash
-# 1. Cloner le dépôt officiel du plugin Astra / TokenWatcher TopBar
+# 1. Installer Astra Monitor GNOME Extension (System & GPU Metrics)
+python3 -m pip install --user --break-system-packages gnome-extensions-cli
+export PATH="${HOME}/.local/bin:${PATH}"
+gext install monitor@astraext.github.io
+
+# 2. Cloner et installer le plugin TokenWatcher TopBar (LLM & Agent Metrics)
 cd ~/Projects
 git clone https://github.com/ThomasK2020/tokenwatcher-topbar.git
 cd tokenwatcher-topbar
-
-# 2. Lancer le script d'installation automatique
 ./install.sh
 
-# 3. Vérifier le bon fonctionnement du daemon de métriques
-systemctl --user status tokenwatcher.service
+# 3. Activer les extensions GNOME Shell
+gsettings set org.gnome.shell disable-user-extensions false
+gsettings set org.gnome.shell enabled-extensions "['tokenwatcher@thomas.local', 'monitor@astraext.github.io']"
 
-# 4. Contrôler le flux d'état IPC généré
+# 4. Vérifier le bon fonctionnement du daemon TokenWatcher
+systemctl --user status tokenwatcher.service
 cat /tmp/tokenwatcher_state.json | jq .
 ```
 
+* **Extensions installées :** 
+  - **Astra Monitor (`monitor@astraext.github.io`) :** Monitoring matériel (CPU, GPU AMD, RAM, capteurs).
+  - **TokenWatcher TopBar (`tokenwatcher@thomas.local`) :** Monitoring d'activité LLM (Hermes, OpenCode, OpenWebUI, VRAM & $t/s$).
 * **Dépôt GitHub du Plugin :** [`https://github.com/ThomasK2020/tokenwatcher-topbar`](https://github.com/ThomasK2020/tokenwatcher-topbar)
-* **Composants :** Daemon Python utilisateur (`tokenwatcher-daemon`) + Extension GNOME Shell 45-50+ (`tokenwatcher@thomas.local`) + Fichier IPC d'état (`/tmp/tokenwatcher_state.json`).
-* **Note de chargement sous Wayland :** Si l'indicateur n'apparaît pas immédiatement dans la barre supérieure, effectuez une déconnexion/reconnexion de votre session GNOME utilisateur (*Log Out / Log In*).
+* **Note de chargement sous Wayland :** Si les indicateurs n'apparaissent pas immédiatement dans la barre supérieure, effectuez une déconnexion/reconnexion de votre session GNOME utilisateur (*Log Out / Log In*).
 
 ---
 
