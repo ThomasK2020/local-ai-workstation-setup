@@ -67,9 +67,24 @@ export_data() {
     mkdir -p "${USB_HERMES_DIR}"
 
     if [ -f "${HERMES_DIR}/state.db" ]; then
-        echo "💾 Compressing and copying state.db to USB (${USB_HERMES_DIR}/state.db.gz)..."
-        gzip -c "${HERMES_DIR}/state.db" > "${USB_HERMES_DIR}/state.db.gz"
-        echo "✅ Conversation database backed up to USB!"
+        echo "💾 Compressing state.db locally..."
+        TMP_GZ=$(mktemp)
+        gzip -c -9 "${HERMES_DIR}/state.db" > "${TMP_GZ}"
+        
+        echo "💾 Copying state.db.gz to USB (${USB_HERMES_DIR}/state.db.gz)..."
+        cp "${TMP_GZ}" "${USB_HERMES_DIR}/state.db.gz"
+        rm -f "${TMP_GZ}"
+        
+        echo "⚡ Flushing USB write buffers (sync)..."
+        sync
+        
+        if gzip -t "${USB_HERMES_DIR}/state.db.gz" 2>/dev/null; then
+            echo "✅ Conversation database backed up & verified on USB!"
+        else
+            echo "⚠️ Warning: Archive test failed. Copying uncompressed state.db to USB as fallback..."
+            cp "${HERMES_DIR}/state.db" "${USB_HERMES_DIR}/state.db"
+            sync
+        fi
     fi
 
     if [ -d "${HERMES_DIR}/skills" ]; then
@@ -137,9 +152,25 @@ restore_data() {
     find_usb_data_dir
 
     if [ -f "${USB_HERMES_DIR}/state.db.gz" ]; then
-        echo "💾 Restoring state.db from USB..."
-        gunzip -c "${USB_HERMES_DIR}/state.db.gz" > "${HERMES_DIR}/state.db"
-        echo "✅ Conversation database state.db restored!"
+        echo "💾 Testing integrity of state.db.gz on USB..."
+        if gzip -t "${USB_HERMES_DIR}/state.db.gz" 2>/dev/null; then
+            echo "💾 Decompressing state.db from USB..."
+            gunzip -c "${USB_HERMES_DIR}/state.db.gz" > "${HERMES_DIR}/state.db"
+            echo "✅ Conversation database state.db restored successfully!"
+        else
+            echo "⚠️ Error: state.db.gz on USB is truncated or corrupted!"
+            if [ -f "${USB_HERMES_DIR}/state.db" ]; then
+                echo "💾 Restoring uncompressed state.db fallback from USB..."
+                cp "${USB_HERMES_DIR}/state.db" "${HERMES_DIR}/state.db"
+                echo "✅ Conversation database state.db restored from fallback!"
+            else
+                echo "❌ Please re-run './Deploy-Hermes-Perso-data.sh export' on the source machine to refresh USB data."
+            fi
+        fi
+    elif [ -f "${USB_HERMES_DIR}/state.db" ]; then
+        echo "💾 Restoring uncompressed state.db from USB..."
+        cp "${USB_HERMES_DIR}/state.db" "${HERMES_DIR}/state.db"
+        echo "✅ Conversation database state.db restored successfully!"
     fi
 
     if [ -d "${USB_HERMES_DIR}/skills" ]; then
