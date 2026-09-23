@@ -15,12 +15,12 @@ tags:
   - llm-models
   - security
 date: 2026-09-22
-last_updated: 2026-09-23 08:20:31 CEST
+last_updated: 2026-09-23 08:27:22 CEST
 ---
 
 # 🚀 Guide d'Installation From Scratch — Local AI Workstation Architecture
 
-**Dernière mise à jour :** 23 Septembre 2026 à 08:20 CEST  
+**Dernière mise à jour :** 23 Septembre 2026 à 08:27 CEST  
 
 > Ce document fournit le pas-à-pas intégral pour installer et configurer **à partir de zéro (from scratch)** une nouvelle station de travail individuelle (HP Z2 Mini APU Strix Halo / Vulkan) ou un serveur central (HP Z6 Multi-GPU) sur l'infrastructure local AI. Il orchestre l'installation du moteur d'inférence, du moteur Docker officiel, d'Open WebUI, d'Hermes Agent, d'OpenCode CLI et des conteneurs applicatifs multi-projets.
 
@@ -177,12 +177,17 @@ Le script est directement présent à la racine des deux dépôts GitHub :
 ```bash
 # A. Assurez-vous que la clé USB (contenant le dossier Hermes-data/) est branchée
 
-# B. Si vous êtes dans le répertoire local-ai-workstation-setup, lancez directement :
+# B. Mettre à jour tous les scripts locaux depuis GitHub :
+(cd ~/local-ai-workstation-setup && git pull origin main)
+
+# C. Lancer la restauration hybride GitHub + USB :
+cd ~/local-ai-workstation-setup
 ./Deploy-Hermes-Perso-data.sh restore
 
-# C. Alternativement, clonez votre dépôt privé de données et lancez le script :
-gh repo clone ThomasK2020/TK-Hermes-data ~/TK-Hermes-data
-bash ~/TK-Hermes-data/Deploy-Hermes-Perso-data.sh restore
+# D. Alternativement (si TK-Hermes-data est cloné séparément) :
+cd ~/TK-Hermes-data 2>/dev/null || gh repo clone ThomasK2020/TK-Hermes-data ~/TK-Hermes-data
+cd ~/TK-Hermes-data && git pull origin main
+bash Deploy-Hermes-Perso-data.sh restore
 ```
 
 #### Ce que réalise la restauration :
