@@ -37,9 +37,27 @@ fi
 echo "✅ Configuration files synchronized from GitHub!"
 
 echo "======================================================================"
-echo "🚀 [Step 2/8] System Dependencies & Optional Hermes Agent Setup"
+echo "🚀 [Step 2/8] System Dependencies, Node.js 22 LTS & Optional Hermes"
 echo "======================================================================"
 apt-get update -y && apt-get install -y curl git jq python3 python3-pip python3-venv ufw mesa-vulkan-drivers ca-certificates gnupg
+
+# Install Node.js 22 LTS system-wide via NodeSource APT (guarantees node/npm in PATH for Desktop GUI & systemd)
+echo "🟢 Installing Node.js 22 LTS system-wide via NodeSource..."
+curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+apt-get install -y nodejs
+echo "✅ Node.js $(node -v) & npm $(npm -v) installed globally in /usr/bin!"
+
+# Export ~/.local/bin globally for all desktop GUI sessions
+cat <<'EOF' > /etc/profile.d/10-local-bin.sh
+if [ -d "$HOME/.local/bin" ] ; then
+    case ":$PATH:" in
+        *":$HOME/.local/bin:"*) ;;
+        *) PATH="$HOME/.local/bin:$PATH" ;;
+    esac
+fi
+export PATH
+EOF
+chmod +x /etc/profile.d/10-local-bin.sh
 
 if [ "$INSTALL_HERMES" = true ]; then
     echo "⚙️ Installing Hermes Agent as requested via CLI flag..."

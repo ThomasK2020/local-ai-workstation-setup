@@ -6,6 +6,11 @@ set -euo pipefail
 
 SETUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Ensure ~/.local/bin is in PATH and imported into systemd user session for Desktop GUI
+mkdir -p ~/.local/bin
+export PATH="${HOME}/.local/bin:${PATH}"
+systemctl --user import-environment PATH 2>/dev/null || true
+
 echo "⚙️ [1/3] Configuring Hermes Agent environment..."
 mkdir -p ~/.hermes
 

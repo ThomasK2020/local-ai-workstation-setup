@@ -71,12 +71,16 @@ cd local-ai-workstation-setup
 Une fois le dépôt cloné et le dossier ouvert :
 
 ```bash
-# Option A : Installation standard (Recommandée)
+# Option A : Installation standard (Recommandée - Installe Docker, Node.js 22 LTS système et Lemonade/vLLM)
 sudo ./setup.sh
 
 # Option B : Installation avec Hermes Agent pré-installé (pour dépannage automatisé)
 sudo ./setup.sh --with-hermes
 ```
+
+### 💡 Inclusions Clés du Script `setup.sh` :
+- **Node.js 22 LTS Système :** Installé globalement via le dépôt officiel NodeSource dans `/usr/bin/node` et `/usr/bin/npm`. Cela garantit que toutes les applications graphiques (GUI Desktop, Electron, extensions GNOME, services systemd) détectent immédiatement `node` et `npm` sans erreur de PATH.
+- **Export Global PATH (`/etc/profile.d/10-local-bin.sh`) :** Injecte `${HOME}/.local/bin` dans l'environnement de toutes les sessions de bureau et services GUI.
 
 ### Ce que réalise le script `setup.sh` de façon automatisée :
 1. **Synchronisation :** Vérifie la présence des fichiers sous `configs/` et clone les dernières versions depuis GitHub si nécessaire.
