@@ -206,13 +206,27 @@ fi
 
 # Note: Open WebUI is ONLY connected to local inference engine.
 # Gemini API Key is NEVER passed or exposed to Open WebUI.
-echo "🌐 Installing Open WebUI package in dedicated virtualenv..."
-mkdir -p /home/appmanager/openwebui-venv
-python3 -m venv /home/appmanager/openwebui-venv
-/home/appmanager/openwebui-venv/bin/pip install --upgrade pip
-/home/appmanager/openwebui-venv/bin/pip install open-webui
+echo "🌐 Installing Open WebUI..."
 
-cat <<EOF > /home/appmanager/.local/bin/start-open-webui.sh
+# Open WebUI requires Python >= 3.11, < 3.13.0a1
+PYTHON_BIN="python3"
+if ! python3 -c 'import sys; exit(0 if sys.version_info < (3, 13) else 1)' 2>/dev/null; then
+    echo "⚙️ Host Python is >= 3.13. Installing Python 3.11 for Open WebUI compatibility..."
+    apt-get install -y python3.11 python3.11-venv 2>/dev/null || apt-get install -y python3.12 python3.12-venv 2>/dev/null || true
+    if command -v python3.11 &>/dev/null; then
+        PYTHON_BIN="python3.11"
+    elif command -v python3.12 &>/dev/null; then
+        PYTHON_BIN="python3.12"
+    fi
+fi
+
+mkdir -p /home/appmanager/openwebui-venv
+"$PYTHON_BIN" -m venv /home/appmanager/openwebui-venv
+/home/appmanager/openwebui-venv/bin/pip install --upgrade pip
+
+if /home/appmanager/openwebui-venv/bin/pip install open-webui; then
+    echo "✅ Open WebUI installed successfully in Python virtualenv!"
+    cat <<EOF > /home/appmanager/.local/bin/start-open-webui.sh
 #!/usr/bin/env bash
 export WEBUI_HOST="${WEBUI_HOST}"
 export WEBUI_PORT="8080"
@@ -221,15 +235,34 @@ export OPENAI_API_BASE_URL="${OPENWEBUI_OPENAI_URL}"
 export CORS_ALLOW_ORIGIN="*"
 exec /home/appmanager/openwebui-venv/bin/open-webui serve
 EOF
+    chmod +x /home/appmanager/.local/bin/start-open-webui.sh
+    chown appmanager:ai-services /home/appmanager/.local/bin/start-open-webui.sh
 
-chmod +x /home/appmanager/.local/bin/start-open-webui.sh
-chown appmanager:ai-services /home/appmanager/.local/bin/start-open-webui.sh
-
-if [ -f "${SETUP_DIR}/configs/systemd/open-webui.service" ]; then
-    cp "${SETUP_DIR}/configs/systemd/open-webui.service" /etc/systemd/system/open-webui.service
+    if [ -f "${SETUP_DIR}/configs/systemd/open-webui.service" ]; then
+        cp "${SETUP_DIR}/configs/systemd/open-webui.service" /etc/systemd/system/open-webui.service
+    fi
+    systemctl daemon-reload
+    systemctl enable --now open-webui.service
+else
+    echo "⚠️ Pip install open-webui failed. Deploying official Docker container fallback..."
+    systemctl disable --now open-webui.service 2>/dev/null || true
+    rm -f /etc/systemd/system/open-webui.service
+    systemctl daemon-reload
+    
+    docker rm -f open-webui 2>/dev/null || true
+    docker run -d \
+      --name open-webui \
+      --network host \
+      -e WEBUI_HOST="${WEBUI_HOST}" \
+      -e WEBUI_PORT="8080" \
+      -e WEBUI_SECRET_KEY="${WEBUI_SECRET}" \
+      -e OPENAI_API_BASE_URL="${OPENWEBUI_OPENAI_URL}" \
+      -e CORS_ALLOW_ORIGIN="*" \
+      -v open-webui-data:/app/backend/data \
+      --restart always \
+      ghcr.io/open-webui/open-webui:main
+    echo "✅ Open WebUI container deployed and running on port 8080!"
 fi
-systemctl daemon-reload
-systemctl enable --now open-webui.service
 
 echo "======================================================================"
 echo "📥 [Step 7/8] Triggering LLM Model Downloads"
