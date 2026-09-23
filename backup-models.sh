@@ -28,16 +28,25 @@ check_space() {
     local target_dir="$1"
     local required_gb="$2"
     
-    mkdir -p "${target_dir}" 2>/dev/null || sudo mkdir -p "${target_dir}"
+    mkdir -p "${target_dir}" 2>/dev/null || sudo mkdir -p "${target_dir}" 2>/dev/null || true
+    
     local avail_gb
     avail_gb=$(df -BG "${target_dir}" | tail -n1 | awk '{print $4}' | sed 's/G//')
     
+    # Calculate space already occupied by existing backups in target_dir
+    local existing_bytes=0
+    if [ -d "${target_dir}" ]; then
+        existing_bytes=$(du -sb "${target_dir}" 2>/dev/null | awk '{print $1}' || echo 0)
+    fi
+    local existing_gb=$(( existing_bytes / 1073741824 ))
+    local effective_gb=$(( avail_gb + existing_gb ))
+
     echo "📊 Target directory: ${target_dir}"
-    echo "💾 Available space: ${avail_gb} GB"
+    echo "💾 Available free space: ${avail_gb} GB (Effective space with existing files: ${effective_gb} GB)"
     echo "📦 Required space: ${required_gb} GB"
     
-    if (( avail_gb < required_gb )); then
-        echo "⚠️ WARNING: Available space (${avail_gb} GB) is less than required (${required_gb} GB)!"
+    if (( effective_gb < required_gb )); then
+        echo "⚠️ WARNING: Effective space (${effective_gb} GB) is less than required (${required_gb} GB)!"
         return 1
     fi
     return 0
@@ -53,8 +62,7 @@ case "${COMMAND}" in
             SRC_CACHE="${VLLM_CACHE}"
         fi
         
-        sudo rsync -avLP --human-readable "${SRC_CACHE}/" "${LOCAL_BACKUP_DIR}/"
-        sudo chown -R "${USER}:${USER}" "${LOCAL_BACKUP_DIR}"
+        rsync -avLP --human-readable "${SRC_CACHE}/" "${LOCAL_BACKUP_DIR}/" 2>/dev/null || sudo rsync -avLP --human-readable "${SRC_CACHE}/" "${LOCAL_BACKUP_DIR}/"
         echo "✅ Local backup updated in ${LOCAL_BACKUP_DIR}"
         ;;
         
@@ -69,15 +77,16 @@ case "${COMMAND}" in
         TOTAL_SIZE_GB=58
         if check_space "${DEST_DIR}" "${TOTAL_SIZE_GB}"; then
             echo "✅ Sufficient space available. Exporting ALL models (~58 GB)..."
-            sudo rsync -avLP --human-readable "${LOCAL_BACKUP_DIR}/" "${DEST_DIR}/"
+            rsync -avLP --human-readable "${LOCAL_BACKUP_DIR}/" "${DEST_DIR}/" 2>/dev/null || sudo rsync -avLP --human-readable "${LOCAL_BACKUP_DIR}/" "${DEST_DIR}/"
         else
             echo "⚡ Space is constrained. Offering 'Pack 32GB' (Gemma 4 12B + Qwen3.6 = ~18.8 GB)..."
             if check_space "${DEST_DIR}" "19"; then
                 echo "🚀 Copying Pack 32GB (Gemma-4-12B + Qwen3.6)..."
-                sudo rsync -avLP --human-readable \
+                rsync -avLP --human-readable \
                     "${LOCAL_BACKUP_DIR}/models--unsloth--gemma-4-12b-it-GGUF" \
                     "${LOCAL_BACKUP_DIR}/models--unsloth--Qwen3.6-35B-A3B-GGUF" \
                     "${DEST_DIR}/"
+                sync
                 echo "✅ Pack 32GB exported successfully!"
             else
                 echo "❌ Error: Not enough space on target device even for Pack 32GB."
