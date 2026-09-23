@@ -15,12 +15,12 @@ tags:
   - llm-models
   - security
 date: 2026-09-22
-last_updated: 2026-09-23 11:45:00 CEST
+last_updated: 2026-09-23 15:30:00 CEST
 ---
 
 # 🚀 Guide d'Installation From Scratch — Local AI Workstation Architecture
 
-**Dernière mise à jour :** 23 Septembre 2026 à 11:45 CEST  
+**Dernière mise à jour :** 23 Septembre 2026 à 15:30 CEST  
 
 > Ce document fournit le pas-à-pas intégral pour installer et configurer **à partir de zéro (from scratch)** une nouvelle station de travail individuelle (HP Z2 Mini APU Strix Halo / Vulkan) ou un serveur central (HP Z6 Multi-GPU) sur l'infrastructure local AI. Il orchestre l'installation du moteur d'inférence, du moteur Docker officiel, d'Open WebUI, d'Hermes Agent, d'OpenCode CLI et des conteneurs applicatifs multi-projets.
 
@@ -44,9 +44,30 @@ last_updated: 2026-09-23 11:45:00 CEST
 
 ---
 
-## 🛠️ Étape 0 : Authentification GitHub CLI (`gh`) & Clonage Initial
+## 🛠️ Étape 0 : Clonage du Dépôt (Dépôt Public vs Privé)
 
-Depuis août 2021, GitHub n'accepte plus les mots de passe de compte pour les opérations Git en HTTPS. Sur une machine neuve, la toute première étape consiste à installer `gh` et à configurer le credential helper Git :
+Le choix de la méthode de clonage dépend de la visibilité attribuée au dépôt `ThomasK2020/local-ai-workstation-setup` sur GitHub :
+
+### Option A : Dépôt Public (Cas Actuel / Recommandé)
+Si le dépôt est **Public**, aucune authentification préalable n'est nécessaire pour récupérer le code. Un simple `git clone` en HTTPS fonctionne immédiatement sur une machine neuve :
+
+```bash
+# Clonage direct sans authentification requise
+git clone https://github.com/ThomasK2020/local-ai-workstation-setup.git
+cd local-ai-workstation-setup
+```
+
+*(Optionnel) Si vous souhaitez ultérieurement contribuer, pousser du code ou gérer vos dépôts avec la CLI GitHub :*
+```bash
+sudo apt update && sudo apt install -y gh
+gh auth login
+gh auth setup-git
+```
+
+---
+
+### Option B : Dépôt Privé (Accès Restreint)
+Si le dépôt est configuré en **Privé**, GitHub exige une authentification préalable (les mots de passe de compte ne sont plus acceptés pour les opérations Git HTTPS depuis août 2021) :
 
 ```bash
 # 1. Installation de GitHub CLI si absent
@@ -59,7 +80,7 @@ gh auth login
 # 3. Configuration de gh comme gestionnaire d'identifiants Git HTTPS
 gh auth setup-git
 
-# 4. Clonage du dépôt centralisé de déploiement
+# 4. Clonage du dépôt privé
 gh repo clone ThomasK2020/local-ai-workstation-setup
 cd local-ai-workstation-setup
 ```
