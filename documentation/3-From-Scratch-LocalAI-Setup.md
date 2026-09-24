@@ -15,12 +15,12 @@ tags:
   - llm-models
   - security
 date: 2026-09-22
-last_updated: 2026-09-23 14:45:00 CEST
+last_updated: 2026-09-23 08:42:00 CEST
 ---
 
 # 🚀 Guide d'Installation From Scratch — Local AI Workstation Architecture
 
-**Dernière mise à jour :** 23 Septembre 2026 à 14:45 CEST  
+**Dernière mise à jour :** 23 Septembre 2026 à 08:42 CEST  
 
 > Ce document fournit le pas-à-pas intégral pour installer et configurer **à partir de zéro (from scratch)** une nouvelle station de travail individuelle (HP Z2 Mini APU Strix Halo / Vulkan) ou un serveur central (HP Z6 Multi-GPU) sur l'infrastructure local AI. Il orchestre l'installation du moteur d'inférence, du moteur Docker officiel, d'Open WebUI, d'Hermes Agent, d'OpenCode CLI et des conteneurs applicatifs multi-projets.
 
@@ -44,30 +44,9 @@ last_updated: 2026-09-23 14:45:00 CEST
 
 ---
 
-## 🛠️ Étape 0 : Clonage du Dépôt (Dépôt Public vs Privé)
+## 🛠️ Étape 0 : Authentification GitHub CLI (`gh`) & Clonage Initial
 
-Le choix de la méthode de clonage dépend de la visibilité attribuée au dépôt `ThomasK2020/local-ai-workstation-setup` sur GitHub :
-
-### Option A : Dépôt Public (Cas Actuel / Recommandé)
-Si le dépôt est **Public**, aucune authentification préalable n'est nécessaire pour récupérer le code. Un simple `git clone` en HTTPS fonctionne immédiatement sur une machine neuve :
-
-```bash
-# Clonage direct sans authentification requise
-git clone https://github.com/ThomasK2020/local-ai-workstation-setup.git
-cd local-ai-workstation-setup
-```
-
-*(Optionnel) Si vous souhaitez ultérieurement contribuer, pousser du code ou gérer vos dépôts avec la CLI GitHub :*
-```bash
-sudo apt update && sudo apt install -y gh
-gh auth login
-gh auth setup-git
-```
-
----
-
-### Option B : Dépôt Privé (Accès Restreint)
-Si le dépôt est configuré en **Privé**, GitHub exige une authentification préalable (les mots de passe de compte ne sont plus acceptés pour les opérations Git HTTPS depuis août 2021) :
+Depuis août 2021, GitHub n'accepte plus les mots de passe de compte pour les opérations Git en HTTPS. Sur une machine neuve, la toute première étape consiste à installer `gh` et à configurer le credential helper Git :
 
 ```bash
 # 1. Installation de GitHub CLI si absent
@@ -80,7 +59,7 @@ gh auth login
 # 3. Configuration de gh comme gestionnaire d'identifiants Git HTTPS
 gh auth setup-git
 
-# 4. Clonage du dépôt privé
+# 4. Clonage du dépôt centralisé de déploiement
 gh repo clone ThomasK2020/local-ai-workstation-setup
 cd local-ai-workstation-setup
 ```
@@ -161,13 +140,11 @@ Une fois le point de montage identifié (ex: `/run/media/$USER/writable/LLM-back
 
 ### Fonctionnement Interne d'Importation :
 * **Détection du Moteur :** Le script teste si `vllm.service` ou `lemonade.service` est actif.
-  - Sur **HP Z2 Mini (Lemonade)** : Importe les modèles directement dans `/var/snap/lemonade-server/common/.cache/huggingface/hub/` et réapplique les permissions `777` sur le cache pour autoriser le démon Snap Lemonade.
+  - Sur **HP Z2 Mini (Lemonade)** : Importe les modèles directement dans `/var/snap/lemonade-server/common/.cache/huggingface/hub/` et recharge Lemonade.
   - Sur **HP Z6 (vLLM)** : Importe les modèles dans le cache centralisé `/var/lib/ai-models/huggingface/hub/` et recharge vLLM.
 * **Auto-Scannage :** Au redémarrage du service, les modèles `.gguf` sont immédiatement disponibles hors-ligne dans Open WebUI et OpenCode.
 
-> 🌐 **Alternative 100% en ligne (sans clé USB) :** Si aucune clé USB n'est disponible, le script `download-models.sh` déclenche le téléchargement en ligne des 5 modèles via l'API Lemonade (en appliquant automatiquement `chmod -R 777` sur le cache Lemonade).
-> 
-> ⚠️ **Avertissement de Sécurité (`chmod 777`) :** L'accès universel au dossier `/var/snap/lemonade-server/common/.cache` permet au démon Snap `lemonade-server` sous `root` d'écrire conjointement avec l'utilisateur local. Sur un environnement partagé, gardez à l'esprit que tout utilisateur local peut lire/modifier ce cache de modèles.
+> 🌐 **Alternative 100% en ligne (sans clé USB) :** Si aucune clé USB n'est disponible, le script `download-models.sh` déclenche le téléchargement en ligne des 5 modèles via l'API Lemonade.
 
 ---
 
@@ -229,45 +206,10 @@ bash setup-projects.sh
 ```
 
 ### Ce que réalise `setup-projects.sh` :
-1. **Vérification GitHub CLI & Clonage Public HTTPS :** Vérifie `gh auth status` pour activer `gh auth setup-git` si disponible, sinon clone directement les dépôts publics en HTTPS sans exiger d'authentification interactive.
+1. **Authentification GitHub CLI :** Vérifie `gh auth status` ou déclenche `gh auth login` interactif.
 2. **Espace de Travail Dynamique :** Crée le répertoire `${HOME}/Projects/`.
-3. **Clonage des Dépôts :** Clone automatiquement `zurich-rental-flatfox-agent`, `tokenwatcher-topbar` (Astra Monitor Plugin) et initialise `pirates_bay_local_coding`.
-4. **Environnement Virtuel Python & Plugin GNOME :** Crée le `venv` local pour le projet Flatfox et déploie le daemon et l'extension GNOME Shell Astra / TokenWatcher TopBar via `./install.sh`.
-
----
-
-## 🖥️ Étape 4.1 : Installation & Configuration d'Astra Monitor & Plugin TokenWatcher TopBar
-
-> **Note :** Le plugin TokenWatcher TopBar et l'extension Astra Monitor permettent le suivi en temps réel des métriques d'agents LLM (Hermes Agent, OpenCode, Open WebUI, Lemonade) et du matériel (CPU, VRAM GPU AMD Radeon, RAM) directement dans le panneau supérieur GNOME Shell.
-
-Pour installer ou réinstaller manuellement Astra Monitor et le plugin TokenWatcher :
-
-```bash
-# 1. Installer Astra Monitor GNOME Extension (System & GPU Metrics)
-python3 -m pip install --user --break-system-packages gnome-extensions-cli
-export PATH="${HOME}/.local/bin:${PATH}"
-gext install monitor@astraext.github.io
-
-# 2. Cloner et installer le plugin TokenWatcher TopBar (LLM & Agent Metrics)
-cd ~/Projects
-git clone https://github.com/ThomasK2020/tokenwatcher-topbar.git
-cd tokenwatcher-topbar
-./install.sh
-
-# 3. Activer les extensions GNOME Shell
-gsettings set org.gnome.shell disable-user-extensions false
-gsettings set org.gnome.shell enabled-extensions "['tokenwatcher@thomas.local', 'monitor@astraext.github.io']"
-
-# 4. Vérifier le bon fonctionnement du daemon TokenWatcher
-systemctl --user status tokenwatcher.service
-cat /tmp/tokenwatcher_state.json | jq .
-```
-
-* **Extensions installées :** 
-  - **Astra Monitor (`monitor@astraext.github.io`) :** Monitoring matériel (CPU, GPU AMD, RAM, capteurs).
-  - **TokenWatcher TopBar (`tokenwatcher@thomas.local`) :** Monitoring d'activité LLM (Hermes, OpenCode, OpenWebUI, VRAM & $t/s$).
-* **Dépôt GitHub du Plugin :** [`https://github.com/ThomasK2020/tokenwatcher-topbar`](https://github.com/ThomasK2020/tokenwatcher-topbar)
-* **Note de chargement sous Wayland :** Si les indicateurs n'apparaissent pas immédiatement dans la barre supérieure, effectuez une déconnexion/reconnexion de votre session GNOME utilisateur (*Log Out / Log In*).
+3. **Clonage des Dépôts :** Clone automatiquement `zurich-rental-flatfox-agent` et initialise `pirates_bay_local_coding`.
+4. **Environnement Virtuel Python :** Crée le `venv` local pour le projet Flatfox et installe les paquets `requirements.txt`.
 
 ---
 
@@ -360,3 +302,17 @@ curl -s http://localhost:13305/v1/chat/completions \
   }' | jq .
 ```
 *Signature attendue :* Statut `200 OK`, réponse générée et métrique `predicted_per_second` > 20 tokens/sec sous Vulkan RADV sur APU Strix Halo.
+
+### D. Matrice d'Isolation des Composants Python & Environnements
+
+Pour prévenir les erreurs PEP 668 (`externally-managed-environment`), l'incompatibilité de modules Python 3.13+ et les conflits de dépendances, l'architecture respecte le schéma d'isolation suivant :
+
+| Composant | Environnement d'Exécution | Paquets & Outils Python Requis | Niveau d'Isolation |
+| :--- | :--- | :--- | :--- |
+| **Agent Flatfox** | **Conteneur Docker** (`playwright/python:v1.40.0-jammy`) | `playwright`, `requests`, `beautifulsoup4`, `pymupdf` | **Isolé dans Docker** 🟢 (Zero dépendance sur l'hôte) |
+| **Flatfox SSO Login** | **Système Hôte** (`login_flatfox_interactive.py`) | `google-chrome-stable`, `playwright`, `python3-full` | **Sur l'Hôte** (Requis pour l'interface graphique Google SSO) |
+| **Astra Monitor** | **Conteneur Docker** (`python:3.11-slim`) | `requests`, utilitaire system `amdgpu_top` | **Isolé dans Docker** 🟢 (Passthrough GPU `/dev/dri`) |
+| **Pirates Bay Sandbox** | **Conteneur Docker** (`python:3.11-slim`) | `pytest`, `build-essential`, `git` | **Isolé dans Docker** 🟢 (Sandbox cgroups 4 Go RAM) |
+| **Hermes Agent** | **Système Hôte** (`~/.hermes/`) | `pipx`, `python3-venv`, `sqlite3` | **Environnement dédié** dans `~/.hermes/` |
+| **Open WebUI** | **Système Hôte** (Service `appmanager`) | `open-webui` (`pip install open-webui`) | **Géré par le service systemd `open-webui`** |
+| **Proxy Lemonade** | **Système Hôte** (`lemonade-opencode-proxy.py`) | `requests`, `urllib3` | **Script système léger** |
