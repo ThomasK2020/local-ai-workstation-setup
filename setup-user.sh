@@ -75,7 +75,7 @@ fi
 cat <<'EOF' > ~/.hermes/memories/USER.md
 # USER PROFILE — LocalAIDemoUser
 - Account: Local AI Workstation Demo User
-- Preferred Mode: 100% Local Inference (Lemonade / Qwen3-Coder-30B)
+- Preferred Mode: 100% Local Inference (Lemonade / vLLM)
 - Interface: Open WebUI (port 8080) & Hermes Agent / OpenCode CLI
 EOF
 
@@ -97,13 +97,25 @@ fi
 echo "🤖 [2/3] Installing OpenCode CLI..."
 curl -fsSL https://opencode.ai/install.sh | bash || true
 
+# Auto-detect whether system runs vLLM (port 8000) or Lemonade (port 13305)
+OPENCODE_BASE_URL="http://localhost:13305/v1"
+OPENCODE_API_KEY="lemonade"
+
+if curl -s http://localhost:8000/v1/models >/dev/null 2>&1 || systemctl is-active --quiet vllm.service 2>/dev/null; then
+    OPENCODE_BASE_URL="http://localhost:8000/v1"
+    OPENCODE_API_KEY="vllm"
+    echo "⚙️ OpenCode configured for vLLM Server on port 8000"
+else
+    echo "⚙️ OpenCode configured for Lemonade Workstation on port 13305"
+fi
+
 mkdir -p ~/.config/opencode
-cat <<'EOF' > ~/.config/opencode/config.json
+cat <<EOF > ~/.config/opencode/config.json
 {
   "provider": "openai",
   "options": {
-    "baseURL": "http://localhost:13305/v1",
-    "apiKey": "lemonade",
+    "baseURL": "${OPENCODE_BASE_URL}",
+    "apiKey": "${OPENCODE_API_KEY}",
     "model": "Qwen3-Coder-30B-A3B-Instruct-GGUF"
   }
 }

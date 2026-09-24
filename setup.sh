@@ -296,7 +296,7 @@ echo "======================================================================"
 echo "📥 [Step 7/8] Triggering LLM Model Downloads"
 echo "======================================================================"
 if [ -f "${SETUP_DIR}/download-models.sh" ]; then
-    bash "${SETUP_DIR}/download-models.sh"
+    ENGINE="${ENGINE}" bash "${SETUP_DIR}/download-models.sh"
 fi
 
 echo "======================================================================"
