@@ -66,6 +66,29 @@ find_usb_data_dir() {
     USB_HERMES_DIR="${usb_path}"
 }
 
+prepare_clean_state_db() {
+    local source_db="${HERMES_DIR}/state.db"
+    local output_clean_db="$1"
+
+    echo "🔍 Vérification de l'intégrité de state.db..."
+    local is_clean
+    is_clean=$(python3 -c "import sqlite3; con=sqlite3.connect('${source_db}'); print('ok' if list(con.execute('PRAGMA integrity_check;')) == [('ok',)] else 'corrupt')" 2>/dev/null || echo "corrupt")
+
+    if [ "${is_clean}" == "ok" ]; then
+        echo "✅ Base state.db saine (intégrité OK)."
+        cp "${source_db}" "${output_clean_db}"
+    else
+        echo "⚠️ Anomalie détectée dans l'index/arbre de state.db. Reconstruction automatique..."
+        rm -f "${output_clean_db}" "${output_clean_db}.recovery.json"
+        if hermes sessions recover --source "${source_db}" --output "${output_clean_db}" --allow-partial >/dev/null 2>&1; then
+            echo "✅ Base reconstruite et assainie avec succès (intégrité parfaite) !"
+        else
+            echo "⚠️ La reconstruction assistée a échoué, utilisation de la copie brute..."
+            cp "${source_db}" "${output_clean_db}"
+        fi
+    fi
+}
+
 export_to_github() {
     echo "======================================================================"
     echo "🌐 Sauvegarde des Sessions, Données et Configurations sur GitHub"
@@ -100,20 +123,28 @@ export_to_github() {
 
     # 4. Base des conversations et sessions (state.db)
     if [ -f "${HERMES_DIR}/state.db" ]; then
-        echo "💾 Checkpoint SQLite WAL & compression de state.db..."
-        python3 -c "import sqlite3; con=sqlite3.connect('${HERMES_DIR}/state.db'); con.execute('PRAGMA wal_checkpoint(TRUNCATE);'); con.close()" 2>/dev/null || true
-        
+        CLEAN_DB_TMP=$(mktemp --tmpdir state_clean_XXXXXX.db)
+        prepare_clean_state_db "${CLEAN_DB_TMP}"
+
+        echo "💾 Compression optimisée de state.db..."
         TMP_XZ=$(mktemp --tmpdir state_db_XXXXXX.xz)
-        xz -9 -c "${HERMES_DIR}/state.db" > "${TMP_XZ}"
-        
-        # Nettoyage des anciens morceaux éventuels
+        xz -9 -c "${CLEAN_DB_TMP}" > "${TMP_XZ}"
+        rm -f "${CLEAN_DB_TMP}"
+
+        # Nettoyage des anciens fichiers/morceaux dans le repo
         rm -f ./state.db.xz*
-        
-        # Découpage en morceaux de 40 Mo max pour respecter strictement les limites GitHub (< 50 Mo)
-        echo "✂️ Découpage de l'archive state.db en blocs de 40 Mo (sécurité quota GitHub)..."
-        split -b 40M -d "${TMP_XZ}" ./state.db.xz.part_
-        rm -f "${TMP_XZ}"
-        echo "✅ Base state.db compressée et prête pour GitHub !"
+
+        local xz_size
+        xz_size=$(wc -c < "${TMP_XZ}")
+        if [ "${xz_size}" -le 47185920 ]; then # Moins de 45 Mo -> fichier unique
+            mv "${TMP_XZ}" ./state.db.xz
+            echo "✅ Archive state.db.xz générée (${xz_size} octets) !"
+        else
+            echo "✂️ Découpage de l'archive state.db en blocs de 40 Mo (< 50 Mo GitHub)..."
+            split -b 40M -d "${TMP_XZ}" ./state.db.xz.part_
+            rm -f "${TMP_XZ}"
+            echo "✅ Blocs state.db.xz.part_* générés !"
+        fi
     fi
 
     # 5. Transcripts de sessions
@@ -129,7 +160,7 @@ export_to_github() {
     # 6. Commit et Push
     echo "🚀 Envoi vers GitHub..."
     git add .
-    git commit -m "Backup automatique sessions & data Hermes [$(date '+%Y-%m-%d %H:%M:%S')]" || echo "Aucune modification à commiter."
+    git commit -m "Backup automatique sessions & data Hermes (healthy DB) [$(date '+%Y-%m-%d %H:%M:%S')]" || echo "Aucune modification à commiter."
     git push origin main
     
     cd "${HOME}"
@@ -146,11 +177,13 @@ export_to_usb() {
     mkdir -p "${USB_HERMES_DIR}"
 
     if [ -f "${HERMES_DIR}/state.db" ]; then
-        echo "💾 Checkpoint SQLite WAL & compression de state.db pour USB..."
-        python3 -c "import sqlite3; con=sqlite3.connect('${HERMES_DIR}/state.db'); con.execute('PRAGMA wal_checkpoint(TRUNCATE);'); con.close()" 2>/dev/null || true
-        
+        CLEAN_DB_TMP=$(mktemp --tmpdir state_clean_usb_XXXXXX.db)
+        prepare_clean_state_db "${CLEAN_DB_TMP}"
+
+        echo "💾 Compression de state.db pour USB..."
         TMP_GZ=$(mktemp)
-        gzip -c -9 "${HERMES_DIR}/state.db" > "${TMP_GZ}"
+        gzip -c -9 "${CLEAN_DB_TMP}" > "${TMP_GZ}"
+        rm -f "${CLEAN_DB_TMP}"
         
         echo "💾 Copie de state.db.gz vers USB (${USB_HERMES_DIR}/state.db.gz)..."
         cp "${TMP_GZ}" "${USB_HERMES_DIR}/state.db.gz"
@@ -230,14 +263,14 @@ restore_from_github() {
     done
 
     # 4. Restauration de state.db (Conversations)
-    if compgen -G "${TMP_REPO}/state.db.xz.part_*" > /dev/null; then
-        echo "💾 Reconstitution et décompression de la base state.db..."
-        cat "${TMP_REPO}"/state.db.xz.part_* | xz -d > "${HERMES_DIR}/state.db"
-        echo "✅ Base state.db reconstituée avec succès !"
-    elif [ -f "${TMP_REPO}/state.db.xz" ]; then
+    if [ -f "${TMP_REPO}/state.db.xz" ]; then
         echo "💾 Décompression de state.db.xz..."
         xz -dc "${TMP_REPO}/state.db.xz" > "${HERMES_DIR}/state.db"
         echo "✅ Base state.db restaurée !"
+    elif compgen -G "${TMP_REPO}/state.db.xz.part_*" > /dev/null; then
+        echo "💾 Reconstitution et décompression de la base state.db..."
+        cat "${TMP_REPO}"/state.db.xz.part_* | xz -d > "${HERMES_DIR}/state.db"
+        echo "✅ Base state.db reconstituée avec succès !"
     fi
 
     # 5. Restauration de sessions/
@@ -253,6 +286,12 @@ restore_from_github() {
     echo ""
     echo "🔍 Vérification de la reprise des sessions..."
     if command -v hermes >/dev/null 2>&1; then
+        local is_clean
+        is_clean=$(python3 -c "import sqlite3; con=sqlite3.connect('${HERMES_DIR}/state.db'); print('ok' if list(con.execute('PRAGMA integrity_check;')) == [('ok',)] else 'corrupt')" 2>/dev/null || echo "corrupt")
+        if [ "${is_clean}" != "ok" ]; then
+            echo "🔧 Réparation automatique du schéma/index..."
+            hermes sessions repair --no-backup 2>/dev/null || true
+        fi
         hermes sessions stats || true
     fi
     echo "🎉 Restauration GitHub terminée avec succès !"
@@ -295,6 +334,12 @@ restore_from_usb() {
     echo ""
     echo "🔍 Vérification de la reprise des sessions..."
     if command -v hermes >/dev/null 2>&1; then
+        local is_clean
+        is_clean=$(python3 -c "import sqlite3; con=sqlite3.connect('${HERMES_DIR}/state.db'); print('ok' if list(con.execute('PRAGMA integrity_check;')) == [('ok',)] else 'corrupt')" 2>/dev/null || echo "corrupt")
+        if [ "${is_clean}" != "ok" ]; then
+            echo "🔧 Réparation automatique du schéma/index..."
+            hermes sessions repair --no-backup 2>/dev/null || true
+        fi
         hermes sessions stats || true
     fi
     echo "🎉 Restauration USB terminée avec succès !"

@@ -44,9 +44,18 @@ fi
 echo "✅ Configuration files synchronized from GitHub!"
 
 echo "======================================================================"
-echo "🚀 [Step 2/8] System Dependencies, Node.js 22 LTS & Optional Hermes"
+echo "🚀 [Step 2/8] System Dependencies, Python Tooling, Node.js 22 LTS & Chrome"
 echo "======================================================================"
-apt-get update -y && apt-get install -y curl git jq python3 python3-pip python3-venv ufw mesa-vulkan-drivers ca-certificates gnupg
+apt-get update -y && apt-get install -y curl git jq python3 python3-pip python3-venv python3-full pipx build-essential libffi-dev ufw mesa-vulkan-drivers ca-certificates gnupg
+
+# Install Google Chrome Stable for host-level interactive SSO login (Flatfox, etc.)
+if ! command -v google-chrome &>/dev/null; then
+    echo "🌐 Installing Google Chrome Stable for interactive SSO login..."
+    curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /etc/apt/keyrings/google-chrome.gpg --yes
+    echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | tee /etc/apt/sources.list.d/google-chrome.list > /dev/null
+    apt-get update -y && apt-get install -y google-chrome-stable || true
+    echo "✅ Google Chrome Stable installed!"
+fi
 
 # Purge legacy or conflicting nodejs/npm packages first
 apt-get remove -y nodejs npm libnode-dev || true

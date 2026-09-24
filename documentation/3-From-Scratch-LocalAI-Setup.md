@@ -216,25 +216,8 @@ cd ~/local-ai-workstation-setup
 > 💡 **Remarque :** Le script `./Deploy-Hermes-Perso-data.sh restore` télécharge automatiquement les données depuis votre dépôt privé GitHub `ThomasK2020/TK-Hermes-data` dans un répertoire temporaire. **Vous n'avez pas besoin d'avoir le dossier `~/TK-Hermes-data` pré-existant ou cloné manuellement sur la machine !**
 
 #### C. Ce que réalise la restauration (`Deploy-Hermes-Perso-data.sh restore`) :
-Le script vous propose le choix de la source :
-* **Option 1 — Depuis GitHub (`ThomasK2020/TK-Hermes-data`) [Recommandé si connecté] :**
-  Restaure vos configurations (`config.yaml`), votre clé Gemini isolée (`.env`), vos notes de mémoire (`MEMORY.md`, `USER.md`), vos automatisations (`cron/`, `plugins/`), vos bases `projects.db` / `kanban.db` / `shared-state.db`, ainsi que **l'historique complet des conversations** (`state.db` reconstitué depuis les blocs `state.db.xz.part_*`) et les transcripts de `sessions/`.
-* **Option 2 — Depuis la Clé USB (`/Hermes-data/`) [Hors-ligne] :**
-  Restaure et décompresse votre base de conversation `state.db` et l'ensemble de vos compétences `skills/` (~643 Mo) après vérification d'intégrité `gzip -t`.
-
-#### D. Vérification de l'historique des sessions & configuration du modèle
-
-1. **Valider la reprise de l'historique des sessions :**
-   ```bash
-   hermes sessions stats
-   ```
-   > 💡 **Vérification :** `hermes sessions stats` doit afficher l'ensemble de vos sessions et messages historiques. Si le total affiche 0, vérifiez si la restauration GitHub s'est bien terminée ou relancez `./Deploy-Hermes-Perso-data.sh restore github`.
-
-2. **Définir Gemini 3.6 par défaut (optionnel) :**
-   ```bash
-   hermes config set model.provider gemini
-   hermes config set model.default gemini-3.6-flash
-   ```
+* **Depuis GitHub (`ThomasK2020/TK-Hermes-data`) :** Restaure vos configurations (`config.yaml`), votre clé Gemini isolée (`.env`), vos notes de mémoire (`MEMORY.md`, `USER.md`), vos automatisations (`cron/`, `plugins/`) et vos bases `projects.db` / `kanban.db`.
+* **Depuis la Clé USB (`/Hermes-data/`) :** Restaure et décompresse votre base de conversation `state.db` et l'ensemble de vos compétences `skills/` (~643 Mo) après vérification d'intégrité `gzip -t`.
 
 ---
 
