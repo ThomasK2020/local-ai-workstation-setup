@@ -15,12 +15,12 @@ tags:
   - llm-models
   - security
 date: 2026-09-22
-last_updated: 2026-09-23 08:42:00 CEST
+last_updated: 2026-09-24 13:15:00 CEST
 ---
 
 # 🚀 Guide d'Installation From Scratch — Local AI Workstation Architecture
 
-**Dernière mise à jour :** 23 Septembre 2026 à 08:42 CEST  
+**Dernière mise à jour :** 24 Septembre 2026 à 13:15 CEST  
 
 > Ce document fournit le pas-à-pas intégral pour installer et configurer **à partir de zéro (from scratch)** une nouvelle station de travail individuelle (HP Z2 Mini APU Strix Halo / Vulkan) ou un serveur central (HP Z6 Multi-GPU) sur l'infrastructure local AI. Il orchestre l'installation du moteur d'inférence, du moteur Docker officiel, d'Open WebUI, d'Hermes Agent, d'OpenCode CLI et des conteneurs applicatifs multi-projets.
 
@@ -148,11 +148,11 @@ Une fois le point de montage identifié (ex: `/run/media/$USER/writable/LLM-back
 
 ---
 
-## ⚙️ Étape 3 : Configuration Session Utilisateur & Restauration Hermes
+## ⚙️ Étape 3 : Configuration Session Utilisateur & Profils Hermes Agent (`setup-user.sh`)
 
 Basculez sous votre session utilisateur standard et configurez votre environnement utilisateur.
 
-### 3.1 Configuration de la Session Utilisateur & OpenCode CLI (`setup-user.sh`)
+### 3.1 Mode Standard : Déploiement Démonstration (Parc / Utilisateur `LocalAIDemoUser`)
 
 ```bash
 # Configuration de la session utilisateur et d'OpenCode CLI
@@ -160,41 +160,29 @@ bash setup-user.sh
 ```
 
 #### Ce que réalise `setup-user.sh` :
-1. **Isolation Stricte de la Clé Gemini :** Propose de configurer de manière optionnelle une clé `GEMINI_API_KEY`.
-   - Si acceptée, la clé est inscrite dans `~/.hermes/.env` (`chmod 600`) et liée au vault Obsidian (`${HOME}/Documents/ThomasKRemoteVault`).
-   - **Règle de Sécurité :** Open WebUI et Docker ne reçoivent et ne voient **jamais** cette clé Gemini.
-2. **Installation OpenCode CLI :** Installe le binaire `opencode` via `https://opencode.ai/install.sh`.
-3. **Configuration Globale OpenCode :** Écrit `~/.config/opencode/config.json` configuré sur le modèle local `Qwen3-Coder-30B-A3B-Instruct-GGUF`.
-4. **Fixation du PATH Desktop GUI :** Importe `${HOME}/.local/bin` dans la session systemd utilisateur (`systemctl --user import-environment PATH`).
+1. **Profil Démo `LocalAIDemoUser` :** Déploie l'environnement générique sans aucune donnée personnelle (`config.yaml` pointant vers Lemonade local `13305`).
+2. **Isolation Stricte de la Clé Gemini :** Propose de configurer de manière optionnelle une clé `GEMINI_API_KEY` (réservée à Hermes, jamais exposée à Open WebUI/Docker).
+3. **Installation OpenCode CLI :** Installe le binaire `opencode` via `https://opencode.ai/install.sh`.
+4. **Configuration Globale OpenCode :** Écrit `~/.config/opencode/config.json` configuré sur le modèle local `Qwen3-Coder-30B-A3B-Instruct-GGUF`.
+5. **Fixation du PATH Desktop GUI :** Importe `${HOME}/.local/bin` dans la session systemd utilisateur (`systemctl --user import-environment PATH`).
 
 ---
 
-### 3.2 Restauration des Données Personnelles Hermes (Mémoires, Skills & Conversations)
+### 3.2 Mode Personnel : Restauration du Profil Personnel Thomas (`TK-Hermes-data`)
 
-Pour restaurer l'intégralité de vos mémoires (`MEMORY.md`, `USER.md`), de vos compétences personnalisées (`skills/`), de vos configurations et de votre historique de conversation sur une nouvelle machine :
+Pour déployer ou restaurer votre environnement personnel complet (Clé Gemini `.env`, mémoires `USER.md`/`MEMORY.md`, historique de conversations `state.db` et compétences personnelles) sur une machine :
 
-#### A. Obtenir le script `Deploy-Hermes-Perso-data.sh` :
-Le script est directement présent à la racine des deux dépôts GitHub :
-* Dans le dépôt de déploiement : `local-ai-workstation-setup/Deploy-Hermes-Perso-data.sh`
-* Dans votre dépôt privé de données : `TK-Hermes-data/Deploy-Hermes-Perso-data.sh`
-
-#### B. Procédure de Restauration Pas-à-Pas :
 ```bash
-# 1. Assurez-vous que la clé USB (contenant le dossier Hermes-data/) est branchée
-
-# 2. Mettre à jour le dépôt de setup local depuis GitHub :
-(cd ~/local-ai-workstation-setup && git pull origin main)
-
-# 3. Lancer la restauration hybride (Télécharge automatiquement TK-Hermes-data de façon transparente) :
-cd ~/local-ai-workstation-setup
-./Deploy-Hermes-Perso-data.sh restore
+# Cloner votre dépôt privé personnel et exécuter le script complet d'installation :
+gh repo clone ThomasK2020/TK-Hermes-data ~/TK-Hermes-data
+bash ~/TK-Hermes-data/setup-hermes-perso.sh
 ```
 
-> 💡 **Remarque :** Le script `./Deploy-Hermes-Perso-data.sh restore` télécharge automatiquement les données depuis votre dépôt privé GitHub `ThomasK2020/TK-Hermes-data` dans un répertoire temporaire. **Vous n'avez pas besoin d'avoir le dossier `~/TK-Hermes-data` pré-existant ou cloné manuellement sur la machine !**
-
-#### C. Ce que réalise la restauration (`Deploy-Hermes-Perso-data.sh restore`) :
+#### Ce que réalise `setup-hermes-perso.sh` :
+* **Installation d'Hermes :** Installe le binaire CLI `hermes` via `https://hermes-agent.nousresearch.com/install.sh` si absent.
 * **Depuis GitHub (`ThomasK2020/TK-Hermes-data`) :** Restaure vos configurations (`config.yaml`), votre clé Gemini isolée (`.env`), vos notes de mémoire (`MEMORY.md`, `USER.md`), vos automatisations (`cron/`, `plugins/`) et vos bases `projects.db` / `kanban.db`.
-* **Depuis la Clé USB (`/Hermes-data/`) :** Restaure et décompresse votre base de conversation `state.db` et l'ensemble de vos compétences `skills/` (~643 Mo) après vérification d'intégrité `gzip -t`.
+* **Depuis la Clé USB (`/Hermes-data/`) :** Restaure et décompresse votre base de conversation `state.db` et l'ensemble de vos compétences `skills/` (~643 Mo).
+* **Permissions Desktop UI :** Ajuste les droits sur `/usr/local/lib/hermes-agent` pour l'interface graphique.
 
 ---
 
