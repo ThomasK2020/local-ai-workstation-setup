@@ -3,7 +3,7 @@
 # ALL-IN-ONE FROM SCRATCH DEPLOYMENT SCRIPT (HP Z2 Mini & HP Z6 Server)
 # ==============================================================================
 # Usage:
-#   sudo ./setup-from-scratch.sh [--with-hermes] [--usb-import <path>]
+#   sudo ./setup-from-scratch.sh [--with-hermes] [--demo-profile|--reset-demo] [--usb-import <path>]
 # ==============================================================================
 set -euo pipefail
 
@@ -16,6 +16,7 @@ fi
 
 SETUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WITH_HERMES=false
+RESET_DEMO=false
 USB_PATH=""
 
 # Parse CLI arguments
@@ -23,6 +24,13 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --with-hermes|-hermes-setup)
             WITH_HERMES=true
+            shift
+            ;;
+        --reset-demo|--force-demo)
+            RESET_DEMO=true
+            shift
+            ;;
+        --demo-profile|--demo-user)
             shift
             ;;
         --usb-import)
@@ -56,9 +64,13 @@ fi
 
 # Step 3: User session & OpenCode Setup
 echo "======================================================================"
-echo "⚙️ Configuring User Session & OpenCode CLI..."
+echo "⚙️ Configuring User Session & OpenCode CLI (LocalAIDemoUser)..."
 echo "======================================================================"
-bash "${SETUP_DIR}/setup-user.sh"
+if [ "$RESET_DEMO" = true ]; then
+    bash "${SETUP_DIR}/setup-user.sh" --reset-demo
+else
+    bash "${SETUP_DIR}/setup-user.sh" --demo-profile
+fi
 
 # Step 4: Restore GitHub Repositories
 echo "======================================================================"
