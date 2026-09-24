@@ -15,12 +15,12 @@ tags:
   - llm-models
   - security
 date: 2026-09-22
-last_updated: 2026-09-24 13:15:00 CEST
+last_updated: 2026-09-24 13:30:00 CEST
 ---
 
 # 🚀 Guide d'Installation From Scratch — Local AI Workstation Architecture
 
-**Dernière mise à jour :** 24 Septembre 2026 à 13:15 CEST  
+**Dernière mise à jour :** 24 Septembre 2026 à 13:30 CEST  
 
 > Ce document fournit le pas-à-pas intégral pour installer et configurer **à partir de zéro (from scratch)** une nouvelle station de travail individuelle (HP Z2 Mini APU Strix Halo / Vulkan) ou un serveur central (HP Z6 Multi-GPU) sur l'infrastructure local AI. Il orchestre l'installation du moteur d'inférence, du moteur Docker officiel, d'Open WebUI, d'Hermes Agent, d'OpenCode CLI et des conteneurs applicatifs multi-projets.
 
@@ -66,15 +66,15 @@ cd local-ai-workstation-setup
 
 ---
 
-## 🛠️ Étape 1 : Lancement de l'Installation Système Root (`setup.sh`)
+## 🛠️ Étape 1 : Lancement de l'Installation Système Root (`setup.sh` & `setup-from-scratch.sh`)
 
-Une fois le dépôt cloné et le dossier ouvert :
+Une fois le dépôt cloné et le dossier ouvert, vous pouvez exécuter le déploiement soit via le script maître "All-in-One", soit étape par étape :
 
 ```bash
-# Option A : Installation standard (Recommandée - Installe Docker, Node.js 22 LTS système et Lemonade/vLLM)
-sudo ./setup.sh
+# Option A : Script Maître All-in-One (Installe le système, Hermes, réinitialise la démo et importe les LLMs USB)
+sudo ./setup-from-scratch.sh --with-hermes --reset-demo --usb-import /run/media/$USER/writable/LLM-backups/
 
-# Option B : Installation avec Hermes Agent pré-installé (pour dépannage automatisé)
+# Option B : Installation Root Système uniquement
 sudo ./setup.sh --with-hermes
 ```
 
@@ -155,8 +155,11 @@ Basculez sous votre session utilisateur standard et configurez votre environneme
 ### 3.1 Mode Standard : Déploiement Démonstration (Parc / Utilisateur `LocalAIDemoUser`)
 
 ```bash
-# Configuration de la session utilisateur et d'OpenCode CLI
-bash setup-user.sh
+# Configuration du profil Démo standard (conserve l'historique local s'il existe)
+bash setup-user.sh --demo-profile
+
+# Réinitialisation Vierge du profil Démo (archive l'ancien chat dans state.db.bak et réinitialise)
+bash setup-user.sh --reset-demo
 ```
 
 #### Ce que réalise `setup-user.sh` :
