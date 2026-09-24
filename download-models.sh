@@ -5,13 +5,26 @@
 set -euo pipefail
 
 ENGINE="${ENGINE:-lemonade}"
+
+# Parse CLI arguments for download-models.sh
+for arg in "$@"; do
+    case "$arg" in
+        --vllm|vllm|--engine-vllm)
+            ENGINE="vllm"
+            ;;
+        --lemonade|lemonade|--engine-lemonade)
+            ENGINE="lemonade"
+            ;;
+    esac
+done
+
 LEMONADE_API="http://localhost:13305"
 VLLM_API="http://localhost:8000"
 VLLM_CACHE="/var/lib/ai-models/huggingface/hub"
 LEMONADE_CACHE="/var/snap/lemonade-server/common/.cache"
 
-# Auto-detect engine if vllm service is active or parameter was passed
-if [ "${ENGINE}" == "vllm" ] || systemctl is-active --quiet vllm.service 2>/dev/null; then
+# Auto-detect engine if vllm service is active or systemd unit exists
+if [ "${ENGINE}" == "vllm" ] || systemctl is-active --quiet vllm.service 2>/dev/null || [ -f /etc/systemd/system/vllm.service ]; then
     ENGINE="vllm"
 fi
 
@@ -21,7 +34,7 @@ if [ "${ENGINE}" == "vllm" ]; then
     echo "======================================================================"
     echo "📥 vLLM Engine Mode (HP Z6 Server) - Hugging Face Cache Setup"
     echo "======================================================================"
-    sudo mkdir -p "${VLLM_CACHE}"
+    mkdir -p "${VLLM_CACHE}" 2>/dev/null || sudo mkdir -p "${VLLM_CACHE}"
     
     HF_REPOS=(
         "unsloth/gemma-4-12b-it-GGUF"

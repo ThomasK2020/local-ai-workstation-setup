@@ -63,9 +63,14 @@ if [ "$WITH_HERMES" = true ]; then
 fi
 if [ -n "$ENGINE_FLAG" ]; then
     SETUP_ARGS+=("$ENGINE_FLAG")
+    if [ "$ENGINE_FLAG" == "--vllm" ]; then
+        export ENGINE="vllm"
+    elif [ "$ENGINE_FLAG" == "--lemonade" ]; then
+        export ENGINE="lemonade"
+    fi
 fi
 
-sudo bash "${SETUP_DIR}/setup.sh" "${SETUP_ARGS[@]+"${SETUP_ARGS[@]}"}"
+sudo ENGINE="${ENGINE:-}" bash "${SETUP_DIR}/setup.sh" "${SETUP_ARGS[@]+"${SETUP_ARGS[@]}"}"
 
 # Step 2: Import LLMs from USB if path provided
 if [[ -n "${USB_PATH}" ]] && [ -d "${USB_PATH}" ]; then

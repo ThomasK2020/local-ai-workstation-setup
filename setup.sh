@@ -195,7 +195,7 @@ else
 fi
 
 if [ "$ENGINE_CHOICE" == "2" ]; then
-    ENGINE="vllm"
+    export ENGINE="vllm"
     echo "⚙️ Installing vLLM engine in dedicated venv (/var/lib/vllm-env) for HP Z6 Server..."
     apt-get install -y python3-full python3-venv build-essential libffi-dev
     mkdir -p /var/lib/vllm-env
@@ -211,7 +211,7 @@ if [ "$ENGINE_CHOICE" == "2" ]; then
     systemctl enable --now vllm.service
     OPENWEBUI_OPENAI_URL="http://localhost:8000/v1"
 else
-    ENGINE="lemonade"
+    export ENGINE="lemonade"
     echo "⚙️ Installing Lemonade engine via official Snap package..."
     snap install lemonade-server || snap refresh lemonade-server || true
     
@@ -313,7 +313,7 @@ echo "======================================================================"
 echo "📥 [Step 7/8] Triggering LLM Model Downloads"
 echo "======================================================================"
 if [ -f "${SETUP_DIR}/download-models.sh" ]; then
-    ENGINE="${ENGINE}" bash "${SETUP_DIR}/download-models.sh"
+    ENGINE="${ENGINE}" bash "${SETUP_DIR}/download-models.sh" "--${ENGINE}"
 fi
 
 echo "======================================================================"
