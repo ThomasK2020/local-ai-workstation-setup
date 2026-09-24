@@ -15,12 +15,12 @@ tags:
   - llm-models
   - security
 date: 2026-09-22
-last_updated: 2026-09-24 13:30:00 CEST
+last_updated: 2026-09-24 13:35:00 CEST
 ---
 
 # 🚀 Guide d'Installation From Scratch — Local AI Workstation Architecture
 
-**Dernière mise à jour :** 24 Septembre 2026 à 13:30 CEST  
+**Dernière mise à jour :** 24 Septembre 2026 à 13:35 CEST  
 
 > Ce document fournit le pas-à-pas intégral pour installer et configurer **à partir de zéro (from scratch)** une nouvelle station de travail individuelle (HP Z2 Mini APU Strix Halo / Vulkan) ou un serveur central (HP Z6 Multi-GPU) sur l'infrastructure local AI. Il orchestre l'installation du moteur d'inférence, du moteur Docker officiel, d'Open WebUI, d'Hermes Agent, d'OpenCode CLI et des conteneurs applicatifs multi-projets.
 
@@ -41,6 +41,19 @@ last_updated: 2026-09-24 13:30:00 CEST
 | **Moteur d'Inférence** | **Lemonade** (Vulkan 1.4 RADV) | **vLLM** (PagedAttention & Continuous Batching) |
 | **Port API Locale** | `13305` (API) / `13306` (Hermes provider) | `8000` (API OpenAI compatible) |
 | **Emplacement Cache LLM** | `/var/snap/lemonade-server/common/.cache/huggingface/hub/` | `/var/lib/ai-models/huggingface/hub/` |
+
+---
+
+## 🧩 Articulation et Rôle de Chaque Script
+
+| Script | Rôle & Périmètre | Mode d'Exécution |
+| :--- | :--- | :--- |
+| **`setup.sh`** | **Infrastructure Système Root :** Moteur Docker officiel, Google Chrome Stable (SSO Flatfox), Node.js 22 LTS, Snap Lemonade/vLLM, comptes & pare-feu UFW. | `sudo ./setup.sh` |
+| **`setup-user.sh`** | **Session Utilisateur Démo :** Profil `LocalAIDemoUser`, OpenCode CLI, `.env` neutre, fix du PATH. | `bash setup-user.sh` |
+| **`setup-projects.sh`** | **Clonage Projets Git :** `gh auth setup-git`, `zurich-rental-flatfox-agent`, venv Python. | `bash setup-projects.sh` |
+| **`setup-docker-projects.sh`** | **Lancement Conteneurs Docker :** Services `flatfox`, `astra-monitor`, `pirates-bay`. | `bash setup-docker-projects.sh` |
+| **`backup-models.sh`** | **Import/Export Modèles LLM USB :** Sauvegarde et réimportation hors-ligne (Pack 32 Go vs 58 Go). | `./backup-models.sh` |
+| **`setup-from-scratch.sh`** | **Chef d'Orchestre All-In-One :** Exécute la séquence complète (`setup.sh` → `backup-models.sh` → `setup-user.sh` → `setup-projects.sh` → `setup-docker-projects.sh`). | `sudo ./setup-from-scratch.sh` |
 
 ---
 
