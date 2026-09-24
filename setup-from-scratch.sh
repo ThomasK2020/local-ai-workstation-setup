@@ -17,11 +17,20 @@ fi
 SETUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WITH_HERMES=false
 RESET_DEMO=false
+ENGINE_FLAG=""
 USB_PATH=""
 
 # Parse CLI arguments
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --vllm|--engine-vllm)
+            ENGINE_FLAG="--vllm"
+            shift
+            ;;
+        --lemonade|--engine-lemonade)
+            ENGINE_FLAG="--lemonade"
+            shift
+            ;;
         --with-hermes|-hermes-setup)
             WITH_HERMES=true
             shift
@@ -48,11 +57,15 @@ echo "🚀 Starting Full 'From Scratch' Local AI Deployment"
 echo "======================================================================"
 
 # Step 1: Execute Root System & Docker Setup
+SETUP_ARGS=()
 if [ "$WITH_HERMES" = true ]; then
-    sudo bash "${SETUP_DIR}/setup.sh" --with-hermes
-else
-    sudo bash "${SETUP_DIR}/setup.sh"
+    SETUP_ARGS+=("--with-hermes")
 fi
+if [ -n "$ENGINE_FLAG" ]; then
+    SETUP_ARGS+=("$ENGINE_FLAG")
+fi
+
+sudo bash "${SETUP_DIR}/setup.sh" "${SETUP_ARGS[@]+"${SETUP_ARGS[@]}"}"
 
 # Step 2: Import LLMs from USB if path provided
 if [[ -n "${USB_PATH}" ]] && [ -d "${USB_PATH}" ]; then

@@ -21,11 +21,24 @@ INSTALL_HERMES=false
 REPO_URL="https://github.com/ThomasK2020/local-ai-workstation-setup.git"
 SETUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+ENGINE_CHOICE=""
+
 # Parse CLI parameters
-for arg in "$@"; do
-    case $arg in
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --vllm|--engine-vllm)
+            ENGINE_CHOICE="2"
+            shift
+            ;;
+        --lemonade|--engine-lemonade)
+            ENGINE_CHOICE="1"
+            shift
+            ;;
         --with-hermes|-hermes-setup|--hermes-setup)
             INSTALL_HERMES=true
+            shift
+            ;;
+        *)
             shift
             ;;
     esac
@@ -173,9 +186,13 @@ chmod g+s /var/lib/ai-models /var/lib/lemonade
 echo "======================================================================"
 echo "🎯 [Step 5/8] Inference Engine Selection (Lemonade vs vLLM)"
 echo "======================================================================"
-echo "1) Lemonade (HP Z2 Mini Workstations - AMD Strix Halo / Vulkan)"
-echo "2) vLLM (HP Z6 Server - Multi-GPU / High-Throughput Multi-User)"
-read -rp "Select inference engine [1 or 2]: " ENGINE_CHOICE
+if [ -z "${ENGINE_CHOICE:-}" ]; then
+    echo "1) Lemonade (HP Z2 Mini Workstations - AMD Strix Halo / Vulkan)"
+    echo "2) vLLM (HP Z6 Server - Multi-GPU / High-Throughput Multi-User)"
+    read -rp "Select inference engine [1 or 2]: " ENGINE_CHOICE
+else
+    echo "ℹ️ Engine choice pre-selected via CLI flag: ENGINE_CHOICE=${ENGINE_CHOICE}"
+fi
 
 if [ "$ENGINE_CHOICE" == "2" ]; then
     ENGINE="vllm"
