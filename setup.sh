@@ -101,7 +101,9 @@ fi
 echo "======================================================================"
 echo "🐳 [Step 3/8] Official Docker Engine & Docker Compose Setup"
 echo "======================================================================"
-# 1. Purge legacy or conflicting docker packages
+# 1. Stop, unmask and purge legacy or conflicting docker packages
+systemctl stop docker.service docker.socket containerd.service 2>/dev/null || true
+systemctl unmask docker.service docker.socket 2>/dev/null || true
 apt-get remove -y docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc || true
 
 # 2. Add Docker official GPG key & APT repository
@@ -115,7 +117,10 @@ echo \
   tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 apt-get update -y
-apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+if ! apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin; then
+    echo "⚠️ Upstream download.docker.com install failed. Falling back to Ubuntu APT docker.io & docker-compose-v2..."
+    apt-get install -y docker.io docker-compose-v2 containerd
+fi
 
 # 3. Configure Docker log-rotation daemon.json
 mkdir -p /etc/docker
@@ -133,7 +138,9 @@ else
 EOF
 fi
 
-systemctl restart docker
+systemctl daemon-reload
+systemctl unmask docker.service docker.socket 2>/dev/null || true
+systemctl restart docker || systemctl start docker
 systemctl enable docker
 echo "✅ Official Docker Engine & Compose Plugin installed!"
 
@@ -171,8 +178,14 @@ read -rp "Select inference engine [1 or 2]: " ENGINE_CHOICE
 
 if [ "$ENGINE_CHOICE" == "2" ]; then
     ENGINE="vllm"
-    echo "⚙️ Installing vLLM engine for HP Z6 Server..."
-    pip install vllm torch
+    echo "⚙️ Installing vLLM engine in dedicated venv (/var/lib/vllm-env) for HP Z6 Server..."
+    apt-get install -y python3-full python3-venv build-essential libffi-dev
+    mkdir -p /var/lib/vllm-env
+    python3 -m venv /var/lib/vllm-env
+    /var/lib/vllm-env/bin/pip install --upgrade pip setuptools wheel
+    /var/lib/vllm-env/bin/pip install vllm torch
+    chown -R appmanager:ai-services /var/lib/vllm-env 2>/dev/null || true
+    
     if [ -f "${SETUP_DIR}/configs/systemd/vllm.service" ]; then
         cp "${SETUP_DIR}/configs/systemd/vllm.service" /etc/systemd/system/vllm.service
     fi
