@@ -83,17 +83,18 @@ EOF
 chmod +x /etc/profile.d/10-local-bin.sh
 
 if [ "$INSTALL_HERMES" = true ]; then
-    echo "⚙️ Installing Hermes Agent as requested via CLI flag..."
-    curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash || true
+    echo "⚙️ Installing Hermes Agent non-interactively..."
+    HERMES_NON_INTERACTIVE=1 HERMES_YES=1 DEBIAN_FRONTEND=noninteractive curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash -s -- --yes --non-interactive || true
     
     # Fix permissions on /usr/local/lib/hermes-agent for user npm dependencies (Desktop GUI)
-    REAL_USER="${SUDO_USER:-HP-AMD-LocalAI}"
-    if [ -d "/usr/local/lib/hermes-agent" ]; then
-        chown -R "${REAL_USER}:${REAL_USER}" /usr/local/lib/hermes-agent 2>/dev/null || true
-        chmod -R 775 /usr/local/lib/hermes-agent 2>/dev/null || true
-        echo "✅ Permissions updated on /usr/local/lib/hermes-agent for ${REAL_USER}"
-    fi
-    echo "✅ Hermes Agent installed successfully for troubleshooting!"
+    REAL_USER="${SUDO_USER:-$LOGNAME}"
+    for target_dir in "/usr/local/lib/hermes-agent" "${HOME}/.hermes"; do
+        if [ -d "${target_dir}" ]; then
+            chown -R "${REAL_USER}:${REAL_USER}" "${target_dir}" 2>/dev/null || true
+            chmod -R 775 "${target_dir}" 2>/dev/null || true
+        fi
+    done
+    echo "✅ Hermes Agent installed silently and permissions configured for ${REAL_USER}!"
 else
     echo "ℹ️ Skipping Hermes Agent installation (use --with-hermes flag to enable)."
 fi
