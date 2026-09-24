@@ -15,12 +15,12 @@ tags:
   - llm-models
   - security
 date: 2026-09-22
-last_updated: 2026-09-23 08:50:00 CEST
+last_updated: 2026-09-23 08:55:00 CEST
 ---
 
 # 🚀 Guide d'Installation From Scratch — Local AI Workstation Architecture
 
-**Dernière mise à jour :** 23 Septembre 2026 à 08:50 CEST  
+**Dernière mise à jour :** 23 Septembre 2026 à 08:55 CEST  
 
 > Ce document fournit le pas-à-pas intégral pour installer et configurer **à partir de zéro (from scratch)** une nouvelle station de travail individuelle (HP Z2 Mini APU Strix Halo / Vulkan) ou un serveur central (HP Z6 Multi-GPU) sur l'infrastructure local AI. Il orchestre l'installation du moteur d'inférence, du moteur Docker officiel, d'Open WebUI, d'Hermes Agent, d'OpenCode CLI et des conteneurs applicatifs multi-projets.
 
@@ -84,11 +84,11 @@ cd local-ai-workstation-setup
 Une fois le dépôt cloné et le dossier ouvert, vous pouvez exécuter le déploiement soit via le script maître "All-in-One", soit étape par étape :
 
 ```bash
-# Option A : Déploiement All-in-One pour Serveur HP Z6 (Mode vLLM)
+# Option A : Déploiement All-in-One Complet (vLLM ou Lemonade)
 sudo ./setup-from-scratch.sh --vllm --with-hermes --usb-import /run/media/$USER/writable/LLM-backups/
 
-# Option B : Déploiement All-in-One pour Station HP Z2 Mini (Mode Lemonade)
-sudo ./setup-from-scratch.sh --lemonade --with-hermes --usb-import /run/media/$USER/writable/LLM-backups/
+# Option B : Déploiement All-in-One Léger (Sans OpenCode CLI et Sans Téléchargement de Projets)
+sudo ./setup-from-scratch.sh --lemonade --skip-opencode --skip-projects
 
 # Option C : Installation Root Système uniquement (Mode vLLM ou Lemonade via flag)
 sudo ./setup.sh --vllm --with-hermes

@@ -3,7 +3,7 @@
 # USER SESSION SETUP SCRIPT (Hermes Agent & OpenCode Configuration)
 # ==============================================================================
 # Usage:
-#   bash setup-user.sh [--demo-profile] [--reset-demo] [--with-gemini]
+#   bash setup-user.sh [--demo-profile] [--reset-demo] [--with-gemini] [--skip-opencode]
 # ==============================================================================
 set -euo pipefail
 
@@ -11,10 +11,14 @@ SETUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEMO_MODE=true
 RESET_DEMO=false
 ASK_GEMINI=false
+INSTALL_OPENCODE=true
 
 # Parse CLI arguments
 for arg in "$@"; do
     case $arg in
+        --skip-opencode|--without-opencode)
+            INSTALL_OPENCODE=false
+            ;;
         --demo-profile|--demo-user)
             DEMO_MODE=true
             ;;
@@ -94,23 +98,24 @@ if [ -d "/usr/local/lib/hermes-agent" ]; then
     echo "✅ Hermes Desktop UI dependencies ready!"
 fi
 
-echo "🤖 [2/3] Installing OpenCode CLI..."
-curl -fsSL https://opencode.ai/install.sh | bash || true
+if [ "$INSTALL_OPENCODE" = true ]; then
+    echo "🤖 [2/3] Installing OpenCode CLI..."
+    curl -fsSL https://opencode.ai/install.sh | bash || true
 
-# Auto-detect whether system runs vLLM (port 8000) or Lemonade (port 13305)
-OPENCODE_BASE_URL="http://localhost:13305/v1"
-OPENCODE_API_KEY="lemonade"
+    # Auto-detect whether system runs vLLM (port 8000) or Lemonade (port 13305)
+    OPENCODE_BASE_URL="http://localhost:13305/v1"
+    OPENCODE_API_KEY="lemonade"
 
-if curl -s http://localhost:8000/v1/models >/dev/null 2>&1 || systemctl is-active --quiet vllm.service 2>/dev/null; then
-    OPENCODE_BASE_URL="http://localhost:8000/v1"
-    OPENCODE_API_KEY="vllm"
-    echo "⚙️ OpenCode configured for vLLM Server on port 8000"
-else
-    echo "⚙️ OpenCode configured for Lemonade Workstation on port 13305"
-fi
+    if curl -s http://localhost:8000/v1/models >/dev/null 2>&1 || systemctl is-active --quiet vllm.service 2>/dev/null; then
+        OPENCODE_BASE_URL="http://localhost:8000/v1"
+        OPENCODE_API_KEY="vllm"
+        echo "⚙️ OpenCode configured for vLLM Server on port 8000"
+    else
+        echo "⚙️ OpenCode configured for Lemonade Workstation on port 13305"
+    fi
 
-mkdir -p ~/.config/opencode
-cat <<EOF > ~/.config/opencode/config.json
+    mkdir -p ~/.config/opencode
+    cat <<EOF > ~/.config/opencode/config.json
 {
   "provider": "openai",
   "options": {
@@ -120,5 +125,8 @@ cat <<EOF > ~/.config/opencode/config.json
   }
 }
 EOF
+else
+    echo "ℹ️ Skipping OpenCode CLI installation & configuration (--skip-opencode)."
+fi
 
 echo "✅ [3/3] User session setup completed successfully for LocalAIDemoUser!"
