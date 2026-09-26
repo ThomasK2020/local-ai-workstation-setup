@@ -99,6 +99,9 @@ USER_ARGS=()
 if [ "$RESET_DEMO" = true ]; then
     USER_ARGS+=("--reset-demo")
 fi
+if [ "$WITH_HERMES" = true ]; then
+    USER_ARGS+=("--hermes")
+fi
 if [ "$SKIP_OPENCODE" = true ]; then
     USER_ARGS+=("--skip-opencode")
 fi
