@@ -134,17 +134,16 @@ if [ "$INSTALL_OPENCODE" = true ]; then
   "\$schema": "https://opencode.ai/config.json",
   "provider": {
     "lemonade": {
-      "npm": "@ai-sdk/openai",
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Lemonade Local",
       "options": {
-        "baseURL": "${OPENCODE_BASE_URL}",
-        "apiKey": "${OPENCODE_API_KEY}"
+        "baseURL": "${OPENCODE_BASE_URL}"
       },
       "models": {
         "Qwen3-Coder-30B-A3B-Instruct-GGUF": {
           "name": "Qwen3-Coder-30B-A3B-Instruct-GGUF"
         }
-      },
-      "name": "Lemonade Local"
+      }
     }
   },
   "model": "lemonade/Qwen3-Coder-30B-A3B-Instruct-GGUF"
