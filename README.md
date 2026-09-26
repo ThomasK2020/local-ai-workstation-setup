@@ -25,6 +25,19 @@ Access full, pre-formatted documentation directly online from any web browser or
 
 ---
 
+## 📂 Dépôts GitHub & Projets Déployés
+
+| Projet / Dépôt | URL GitHub | Visibilité | Emplacement Local | Rôle & Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **`local-ai-workstation-setup`** | [ThomasK2020/local-ai-workstation-setup](https://github.com/ThomasK2020/local-ai-workstation-setup) | **Public** | `~/local-ai-workstation-setup` | Kit de déploiement et scripts d'installation automatisés de la station IA. |
+| **`tokenwatcher-topbar`** | [ThomasK2020/tokenwatcher-topbar](https://github.com/ThomasK2020/tokenwatcher-topbar) | **Public** | `~/Projects/tokenwatcher-topbar` | Extension GNOME TopBar pour le suivi VRAM/tokens LLM en temps réel. |
+| **`zurich-rental-flatfox-agent`** | [ThomasK2020/zurich-rental-flatfox-agent](https://github.com/ThomasK2020/zurich-rental-flatfox-agent) | **Privé** | `~/Projects/zurich-rental-flatfox-agent` | Agent de recherche immobilière Flatfox (Docker, Playwright & dashboard). |
+| **`TK-Hermes-data`** | [ThomasK2020/TK-Hermes-data](https://github.com/ThomasK2020/TK-Hermes-data) | **Privé** | *(Dépôt distant system/data)* | Sauvegarde chiffrée/partionnée des données système et sessions Hermes. |
+| **`pirates_bay_local_coding`** | *N/A (Généré par script)* | **Local** | `~/Projects/pirates_bay_local_coding` | Espace de travail / bac à sable local pour l'exécution d'OpenCode et Docker. |
+| **`Check-Node-Troubleshooting`** | *N/A (Local)* | **Local** | `~/LocalAI-Projects/Check-Node-Troubleshooting` | Utilitaires et scripts de diagnostic local. |
+
+---
+
 ## Quick Start / Usage
 
 ### Option A: All-in-One From Scratch Deployer (Recommandé)

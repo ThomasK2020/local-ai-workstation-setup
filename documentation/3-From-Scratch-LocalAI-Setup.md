@@ -213,10 +213,21 @@ bash setup-projects.sh
 ```
 
 ### Ce que réalise `setup-projects.sh` :
-1. **Authentification GitHub CLI :** Vérifie `gh auth status` ou déclenche `gh auth login` interactif.
+1. **Authentification GitHub CLI :** Vérifie `gh auth status` ou effectue le clonage direct des dépôts publics.
 2. **Espace de Travail Dynamique :** Crée le répertoire `${HOME}/Projects/`.
-3. **Clonage des Dépôts :** Clone automatiquement `zurich-rental-flatfox-agent` et initialise `pirates_bay_local_coding`.
+3. **Clonage des Dépôts :** Clone automatiquement `zurich-rental-flatfox-agent`, `tokenwatcher-topbar` et initialise `pirates_bay_local_coding`.
 4. **Environnement Virtuel Python :** Crée le `venv` local pour le projet Flatfox et installe les paquets `requirements.txt`.
+
+#### Liste des Projets et Dépôts GitHub Associés :
+
+| Projet / Dépôt | URL GitHub | Visibilité | Emplacement Local | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| **`local-ai-workstation-setup`** | [ThomasK2020/local-ai-workstation-setup](https://github.com/ThomasK2020/local-ai-workstation-setup) | **Public** | `~/local-ai-workstation-setup` | Scripts et documentation d'installation de la station. |
+| **`tokenwatcher-topbar`** | [ThomasK2020/tokenwatcher-topbar](https://github.com/ThomasK2020/tokenwatcher-topbar) | **Public** | `~/Projects/tokenwatcher-topbar` | Extension GNOME TopBar pour le suivi VRAM/tokens LLM. |
+| **`zurich-rental-flatfox-agent`** | [ThomasK2020/zurich-rental-flatfox-agent](https://github.com/ThomasK2020/zurich-rental-flatfox-agent) | **Privé** | `~/Projects/zurich-rental-flatfox-agent` | Agent Flatfox de recherche d'appartements (Docker/Playwright). |
+| **`TK-Hermes-data`** | [ThomasK2020/TK-Hermes-data](https://github.com/ThomasK2020/TK-Hermes-data) | **Privé** | *(Dépôt distant data)* | Sauvegarde chiffrée des données et sessions Hermes. |
+| **`pirates_bay_local_coding`** | *N/A (Local)* | **Local** | `~/Projects/pirates_bay_local_coding` | Bac à sable de développement local (OpenCode/Docker). |
+| **`Check-Node-Troubleshooting`** | *N/A (Local)* | **Local** | `~/LocalAI-Projects/Check-Node-Troubleshooting` | Utilitaires de diagnostic de nœud local. |
 
 ---
 
