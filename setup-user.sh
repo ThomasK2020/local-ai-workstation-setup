@@ -100,7 +100,13 @@ fi
 
 if [ "$INSTALL_OPENCODE" = true ]; then
     echo "🤖 [2/3] Installing OpenCode CLI..."
-    curl -fsSL https://opencode.ai/install.sh | bash || true
+    if ! command -v opencode &>/dev/null; then
+        npm install -g --allow-scripts=opencode-ai opencode-ai || curl -fsSL https://opencode.ai/install.sh | bash || true
+        mkdir -p "${HOME}/.local/bin"
+        [ -n "$(command -v opencode 2>/dev/null)" ] && ln -sf "$(command -v opencode)" "${HOME}/.local/bin/opencode" || true
+    else
+        echo "✅ OpenCode CLI already installed ($(opencode --version 2>/dev/null || echo 'present'))"
+    fi
 
     # Auto-detect whether system runs vLLM (port 8000) or Lemonade (port 13305)
     OPENCODE_BASE_URL="http://localhost:13305/v1"

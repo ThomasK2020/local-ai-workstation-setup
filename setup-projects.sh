@@ -45,9 +45,10 @@ clone_repo() {
 clone_repo "https://github.com/ThomasK2020/zurich-rental-flatfox-agent.git" "zurich-rental-flatfox-agent"
 clone_repo "https://github.com/ThomasK2020/tokenwatcher-topbar.git" "tokenwatcher-topbar"
 
-if [ ! -d "pirates_bay_local_coding" ]; then
-    echo "Initializing Pirates Bay workspace..."
-    mkdir -p pirates_bay_local_coding
+if [ ! -d "pirates_bay_local_coding" ] || [ -z "$(ls -A pirates_bay_local_coding 2>/dev/null)" ]; then
+    echo "Cloning Pirates Bay Local AI repository..."
+    rm -rf pirates_bay_local_coding
+    clone_repo "https://github.com/ThomasK2020/PiratesBayLocalAI.git" "pirates_bay_local_coding"
 fi
 
 echo "📝 [3/3] Setting up Python virtual environment, Astra Monitor & TokenWatcher plugin..."
