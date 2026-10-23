@@ -1,0 +1,106 @@
+model:
+  default: gemini-3.5-flash
+  provider: gemini
+  aliases:
+    gemma: custom/Gemma-4-12B-it-GGUF
+    gemma-12b: custom/Gemma-4-12B-it-GGUF
+    gemma-31b: custom/Gemma-4-31B-it-GGUF
+    coder: custom/Qwen3-Coder-30B-A3B-Instruct-GGUF
+    qwen-coder: custom/Qwen3-Coder-30B-A3B-Instruct-GGUF
+    qwen: custom/Qwen3.6-27B-GGUF
+    deepseek: custom/DeepSeek-Qwen3-8B-GGUF
+  context_length: 65536
+agent:
+  max_turns: 150
+  reasoning_effort: medium
+browser:
+  cloud_provider: local
+  use_gateway: false
+  use_real_profile: true
+display:
+  tool_progress: all
+tts:
+  provider: edge
+  use_gateway: false
+stt:
+  local:
+    model: large-v3
+  use_gateway: false
+timezone: Europe/Paris
+onboarding:
+  seen:
+    tool_progress_prompt: true
+    busy_input_prompt: true
+_config_version: 50
+session_reset:
+  mode: none
+platform_toolsets:
+  cli:
+    - browser
+    - clarify
+    - code_execution
+    - computer_use
+    - connections
+    - cronjob
+    - delegation
+    - file
+    - image_gen
+    - memory
+    - session_search
+    - skills
+    - terminal
+    - todo
+    - tts
+    - video_gen
+    - vision
+    - web
+known_plugin_toolsets:
+  cli:
+    - spotify
+known_builtin_toolsets:
+  cli:
+    - browser
+    - clarify
+    - code_execution
+    - computer_use
+    - connections
+    - context_engine
+    - cronjob
+    - delegation
+    - discord
+    - discord_admin
+    - file
+    - homeassistant
+    - image_gen
+    - memory
+    - session_search
+    - skills
+    - spotify
+    - stt
+    - terminal
+    - todo
+    - tts
+    - video
+    - video_gen
+    - vision
+    - web
+    - x_search
+    - yuanbao
+custom_providers:
+  - name: Local Lemonade (Gemma 4 Vulkan)
+    base_url: http://localhost:13306/v1
+    model: Gemma-4-12B-it-GGUF
+    models:
+      Gemma-4-12B-it-GGUF: {}
+      Gemma-4-31B-it-GGUF: {}
+      Qwen3-Coder-30B-A3B-Instruct-GGUF: {}
+      DeepSeek-Qwen3-8B-GGUF: {}
+      Qwen3.6-27B-GGUF: {}
+    models_discovered: true
+approvals:
+  timeout: 600
+telemetry:
+  shared_metrics:
+    enabled: false
+    send: false
+    offer_version: 2

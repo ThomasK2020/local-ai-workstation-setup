@@ -1,0 +1,29 @@
+# Secrets and credentials
+*token*.json
+*secret*.json
+*.env
+*.env.*
+*.pem
+*.key
+*.crt
+
+# Databases & runtime data
+*.sqlite
+*.db
+*.db-journal
+*.log
+
+# Caches & dependencies
+__pycache__/
+*.py[cod]
+.cache/
+node_modules/
+.venv/
+venv/
+
+# Backup snapshots and archives
+backups/
+state-snapshots/
+*.tar.gz
+*.zip
+*.gguf

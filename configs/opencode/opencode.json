@@ -1,0 +1,30 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "lemonade": {
+      "npm": "@ai-sdk/openai",
+      "name": "Lemonade Local",
+      "options": {
+        "baseURL": "http://127.0.0.1:13306/v1",
+        "apiKey": "lemonade"
+      },
+      "models": {
+        "Qwen3-Coder-30B-A3B-Instruct-GGUF": {
+          "name": "Qwen3-Coder-30B-A3B-Instruct-GGUF"
+        },
+        "Gemma-4-12B-it-GGUF": {
+          "name": "Gemma-4-12B-it-GGUF"
+        },
+        "Gemma-4-31B-it-GGUF": {
+          "name": "Gemma-4-31B-it-GGUF"
+        },
+        "Qwen3.6-27B-GGUF": {
+          "name": "Qwen3.6-27B-GGUF"
+        },
+        "DeepSeek-Qwen3-8B-GGUF": {
+          "name": "DeepSeek-Qwen3-8B-GGUF"
+        }
+      }
+    }
+  }
+}

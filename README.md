@@ -11,6 +11,8 @@ Automated deployment kit and configuration files for multi-station local AI arch
 | **`setup-projects.sh`** | **Clonage Projets Git :** `gh auth setup-git`, `zurich-rental-flatfox-agent`, venv Python. | `bash setup-projects.sh` |
 | **`setup-docker-projects.sh`** | **Lancement Conteneurs Docker :** Services `flatfox`, `astra-monitor`, `pirates-bay`. | `bash setup-docker-projects.sh` |
 | **`backup-models.sh`** | **Import/Export Modèles LLM USB :** Sauvegarde et réimportation hors-ligne (Pack 32 Go vs 58 Go). | `./backup-models.sh` |
+| **`sync-configs.sh`** | **Sauvegarde Configurations IA :** Sauvegarde Hermes (profils lively-tk, perso, amd), Lemonade & OpenCode. | `./sync-configs.sh` |
+| **`restore-configs.sh`** | **Restauration Configurations IA :** Restaure l'ensemble des configs Hermes, Lemonade & OpenCode sur la machine. | `./restore-configs.sh` |
 | **`setup-from-scratch.sh`** | **Chef d'Orchestre All-In-One :** Exécute la séquence complète (`setup.sh` → `backup-models.sh` → `setup-user.sh` → `setup-projects.sh` → `setup-docker-projects.sh`). | `sudo ./setup-from-scratch.sh` |
 
 ---

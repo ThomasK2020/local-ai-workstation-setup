@@ -1,0 +1,68 @@
+_config_version: 50
+model:
+  default: NousResearch/Hermes-3-Llama-3.1-8B
+  provider: openrouter
+agent:
+  max_turns: 150
+  reasoning_effort: medium
+browser:
+  cloud_provider: local
+  use_gateway: false
+  use_real_profile: true
+display:
+  tool_progress: all
+  in_app_tips: false
+  in_app_tours: false
+timezone: Europe/Paris
+platform_toolsets:
+  cli:
+    - browser
+    - clarify
+    - code_execution
+    - computer_use
+    - connections
+    - cronjob
+    - delegation
+    - file
+    - image_gen
+    - memory
+    - session_search
+    - skills
+    - terminal
+    - todo
+    - tts
+    - video_gen
+    - vision
+    - web
+known_plugin_toolsets:
+  cli:
+    - spotify
+known_builtin_toolsets:
+  cli:
+    - browser
+    - clarify
+    - code_execution
+    - computer_use
+    - connections
+    - context_engine
+    - cronjob
+    - delegation
+    - discord
+    - discord_admin
+    - file
+    - homeassistant
+    - image_gen
+    - memory
+    - session_search
+    - skills
+    - spotify
+    - stt
+    - terminal
+    - todo
+    - tts
+    - video
+    - video_gen
+    - vision
+    - web
+    - x_search
+    - yuanbao

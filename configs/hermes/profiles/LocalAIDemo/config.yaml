@@ -1,0 +1,3 @@
+model:
+  provider: gemini
+  default: gemini-2.5-flash

@@ -1,0 +1,7 @@
+{
+  "ctx_size": 65536,
+  "llamacpp": {
+    "args": "-fa on -b 512 -ub 128 --cache-reuse 256 -ctk q8_0 -ctv q8_0",
+    "vulkan_args": "-fa on -b 512 -ub 128 --cache-reuse 256 -ctk q8_0 -ctv q8_0 --temp 0.2 --repeat-penalty 1.0"
+  }
+}

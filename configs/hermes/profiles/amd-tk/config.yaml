@@ -1,0 +1,138 @@
+model:
+  default: gemini-3.5-flash
+  provider: gemini
+  aliases:
+    gemma: custom/Gemma-4-12B-it-GGUF
+    gemma-12b: custom/Gemma-4-12B-it-GGUF
+    gemma-31b: custom/Gemma-4-31B-it-GGUF
+    coder: custom/Qwen3-Coder-30B-A3B-Instruct-GGUF
+    qwen-coder: custom/Qwen3-Coder-30B-A3B-Instruct-GGUF
+    qwen: custom/Qwen3.6-27B-GGUF
+    deepseek: custom/DeepSeek-Qwen3-8B-GGUF
+  context_length: 65536
+agent:
+  max_turns: 150
+  reasoning_effort: medium
+browser:
+  cloud_provider: local
+  use_gateway: false
+  use_real_profile: true
+display:
+  tool_progress: all
+tts:
+  provider: edge
+  use_gateway: false
+stt:
+  local:
+    model: large-v3
+  use_gateway: false
+timezone: Europe/Paris
+onboarding:
+  seen:
+    tool_progress_prompt: true
+_config_version: 50
+session_reset:
+  mode: none
+platform_toolsets:
+  cli:
+    - browser
+    - clarify
+    - code_execution
+    - computer_use
+    - connections
+    - cronjob
+    - delegation
+    - file
+    - image_gen
+    - memory
+    - session_search
+    - skills
+    - terminal
+    - todo
+    - tts
+    - video_gen
+    - vision
+    - web
+known_plugin_toolsets:
+  cli:
+    - spotify
+known_builtin_toolsets:
+  cli:
+    - browser
+    - clarify
+    - code_execution
+    - computer_use
+    - connections
+    - context_engine
+    - cronjob
+    - delegation
+    - discord
+    - discord_admin
+    - file
+    - homeassistant
+    - image_gen
+    - memory
+    - session_search
+    - skills
+    - spotify
+    - stt
+    - terminal
+    - todo
+    - tts
+    - video
+    - video_gen
+    - vision
+    - web
+    - x_search
+    - yuanbao
+custom_providers:
+  - name: Local Lemonade (Gemma 4 Vulkan)
+    base_url: http://localhost:13306/v1
+    model: Gemma-4-12B-it-GGUF
+    models:
+      Gemma-4-12B-it-GGUF: {}
+      Gemma-4-31B-it-GGUF: {}
+      Qwen3-Coder-30B-A3B-Instruct-GGUF: {}
+      DeepSeek-Qwen3-8B-GGUF: {}
+      Qwen3.6-27B-GGUF: {}
+    models_discovered: true
+
+# ── Security ──────────────────────────────────────────────────────────
+# Secret redaction is ON by default — strings that look like API keys,
+# tokens, and passwords are masked in tool output, logs, and chat
+# responses before the model or user ever sees them. Set redact_secrets
+# to false to disable (e.g. when developing the redactor itself).
+# tirith pre-exec scanning is enabled by default when the tirith binary
+# is available. Configure via security.tirith_* keys or env vars
+# (TIRITH_ENABLED, TIRITH_BIN, TIRITH_TIMEOUT, TIRITH_FAIL_OPEN).
+#
+# security:
+#   redact_secrets: true
+#   tirith_enabled: true
+#   tirith_path: "tirith"
+#   tirith_timeout: 5
+#   tirith_fail_open: true
+
+# ── Fallback Model ────────────────────────────────────────────────────
+# Automatic provider failover when primary is unavailable.
+# Uncomment and configure to enable. Triggers on rate limits (429),
+# overload (529), service errors (503), or connection failures.
+#
+# Supported providers:
+#   openrouter   (OPENROUTER_API_KEY)  — routes to any model
+#   openai-codex (OAuth — hermes auth) — OpenAI Codex
+#   nous         (OAuth — hermes auth) — Nous Portal
+#   zai          (ZAI_API_KEY)         — Z.AI / GLM
+#   kimi-coding  (KIMI_API_KEY)        — Kimi / Moonshot
+#   kimi-coding-cn (KIMI_CN_API_KEY)   — Kimi / Moonshot (China)
+#   minimax      (MINIMAX_API_KEY)     — MiniMax
+#   minimax-cn   (MINIMAX_CN_API_KEY)  — MiniMax (China)
+#   bedrock      (AWS IAM / boto3)     — AWS Bedrock (Converse API)
+#
+# For custom OpenAI-compatible endpoints, add base_url and key_env.
+#
+# fallback_model:
+#   provider: openrouter
+#   model: anthropic/claude-sonnet-4
+approvals:
+  timeout: 400
