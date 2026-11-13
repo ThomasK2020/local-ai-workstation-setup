@@ -7,6 +7,12 @@
 # ==============================================================================
 set -euo pipefail
 
+# If executed via sudo, re-run as non-root user ($SUDO_USER) so files land in user home
+if [ "${EUID}" -eq 0 ] && [ -n "${SUDO_USER:-}" ] && [ "${SUDO_USER}" != "root" ]; then
+    echo "⚠️ setup-user.sh should run as non-root user. Switching execution to user '${SUDO_USER}'..."
+    exec sudo -u "${SUDO_USER}" bash "$0" "$@"
+fi
+
 SETUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEMO_MODE=true
 RESET_DEMO=false
