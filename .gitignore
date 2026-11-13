@@ -1,29 +1,9 @@
-# Secrets and credentials
-*token*.json
-*secret*.json
-*.env
-*.env.*
-*.pem
-*.key
-*.crt
+# Local data directory
+data/*
+!data/.gitkeep
 
-# Databases & runtime data
-*.sqlite
-*.db
-*.db-journal
-*.log
-
-# Caches & dependencies
+# Cache & temporary files
+*.pyc
 __pycache__/
-*.py[cod]
-.cache/
-node_modules/
-.venv/
-venv/
-
-# Backup snapshots and archives
-backups/
-state-snapshots/
-*.tar.gz
-*.zip
-*.gguf
+*.bak.*
+.DS_Store
