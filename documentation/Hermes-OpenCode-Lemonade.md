@@ -41,21 +41,36 @@ Spécifications d'installation et de déploiement pour le schéma hybride d'assi
 
 ## ⚙️ Procédure d'Installation Pas à Pas
 
-### Step 1 : Configurer OpenCode CLI pour Qwen Coder Local
-Fichier de configuration hôte `~/.config/opencode/config.json` :
+### Step 1 : Configurer OpenCode CLI pour Qwen Coder Local (Proxy 13306)
+Fichier de configuration unique hôte `~/.config/opencode/opencode.json` (supprimer tout ancien `config.json` sur 13305 pour éviter les conflits) :
 ```json
 {
-  "$schema": "https://opencode.ai/config.schema.json",
-  "provider": "openai",
-  "options": {
-    "baseURL": "http://localhost:13305/v1",
-    "apiKey": "lemonade",
-    "model": "Qwen3-Coder-30B-A3B-Instruct-GGUF"
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "lemonade": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Lemonade Local",
+      "options": {
+        "baseURL": "http://127.0.0.1:13306/v1",
+        "apiKey": "lemonade"
+      },
+      "models": {
+        "Qwen3-Coder-30B-A3B-Instruct-GGUF": {
+          "name": "Qwen3-Coder-30B-A3B-Instruct-GGUF",
+          "tool_call": true,
+          "temperature": true,
+          "limit": {
+            "context": 65536,
+            "output": 8192
+          },
+          "options": {
+            "temperature": 0.15
+          }
+        }
+      }
+    }
   },
-  "execution": {
-    "approval": "auto",
-    "timeout": 300
-  }
+  "model": "lemonade/Qwen3-Coder-30B-A3B-Instruct-GGUF"
 }
 ```
 

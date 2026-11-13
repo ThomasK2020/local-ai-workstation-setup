@@ -3,7 +3,7 @@
 # USER SESSION SETUP SCRIPT (Hermes Agent & OpenCode Configuration)
 # ==============================================================================
 # Usage:
-#   bash setup-user.sh [--demo-profile] [--reset-demo] [--with-gemini] [--skip-opencode]
+#   bash setup-user.sh [--profile amd-tk] [--with-hermes] [--reset-demo] [--with-gemini] [--skip-opencode]
 # ==============================================================================
 set -euo pipefail
 
@@ -12,26 +12,39 @@ DEMO_MODE=true
 RESET_DEMO=false
 ASK_GEMINI=false
 INSTALL_OPENCODE=true
-CONFIGURE_HERMES=false
+CONFIGURE_HERMES=true
+PROFILE_NAME="amd-tk"
 
 # Parse CLI arguments
-for arg in "$@"; do
-    case $arg in
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --profile|-p)
+            PROFILE_NAME="$2"
+            shift 2
+            ;;
         --hermes|--with-hermes)
             CONFIGURE_HERMES=true
+            shift
             ;;
         --skip-opencode|--without-opencode)
             INSTALL_OPENCODE=false
+            shift
             ;;
         --demo-profile|--demo-user)
             DEMO_MODE=true
+            shift
             ;;
         --reset-demo|--force-demo)
             DEMO_MODE=true
             RESET_DEMO=true
+            shift
             ;;
         --with-gemini)
             ASK_GEMINI=true
+            shift
+            ;;
+        *)
+            shift
             ;;
     esac
 done
@@ -41,15 +54,18 @@ mkdir -p ~/.local/bin
 export PATH="${HOME}/.local/bin:${PATH}"
 systemctl --user import-environment PATH 2>/dev/null || true
 
+HERMES_ROOT="${HOME}/.hermes"
+PROFILE_DIR="${HERMES_ROOT}/profiles/${PROFILE_NAME}"
+
 if [ "$CONFIGURE_HERMES" = true ]; then
-    echo "⚙️ [1/3] Configuring Hermes Agent environment for LocalAIDemoUser..."
-    mkdir -p ~/.hermes ~/.hermes/memories
+    echo "⚙️ [1/3] Configuring Hermes Agent profile '${PROFILE_NAME}'..."
+    mkdir -p "${HERMES_ROOT}" "${PROFILE_DIR}" "${PROFILE_DIR}/memories" "${PROFILE_DIR}/skills"
 
     # Handle reset/backup of previous state.db if --reset-demo is specified
-    if [ "$RESET_DEMO" = true ] && [ -f ~/.hermes/state.db ]; then
+    if [ "$RESET_DEMO" = true ] && [ -f "${PROFILE_DIR}/state.db" ]; then
         TIMESTAMP=$(date '+%Y%m%d_%H%M%S')
-        echo "⚠️ Resetting demo chat history: backing up ~/.hermes/state.db -> ~/.hermes/state.db.bak.${TIMESTAMP}"
-        mv ~/.hermes/state.db "${HOME}/.hermes/state.db.bak.${TIMESTAMP}"
+        echo "⚠️ Resetting chat history: backing up ${PROFILE_DIR}/state.db -> state.db.bak.${TIMESTAMP}"
+        mv "${PROFILE_DIR}/state.db" "${PROFILE_DIR}/state.db.bak.${TIMESTAMP}"
     fi
 
     # Optional Gemini API Key strictly reserved for Hermes Agent
@@ -69,41 +85,48 @@ if [ "$CONFIGURE_HERMES" = true ]; then
         fi
     fi
 
-    cat <<EOF > ~/.hermes/.env
+    cat <<EOF > "${PROFILE_DIR}/.env"
 GEMINI_API_KEY=${GEMINI_KEY}
 OBSIDIAN_VAULT_PATH=${HOME}/Documents/ThomasKRemoteVault
 EOF
-    chmod 600 ~/.hermes/.env
+    chmod 600 "${PROFILE_DIR}/.env"
 
-    # Deploy default config.yaml for LocalAIDemoUser
+    cat <<EOF > "${HERMES_ROOT}/.env"
+GEMINI_API_KEY=${GEMINI_KEY}
+OBSIDIAN_VAULT_PATH=${HOME}/Documents/ThomasKRemoteVault
+EOF
+    chmod 600 "${HERMES_ROOT}/.env"
+
+    # Deploy default config.yaml for profile
     if [ -f "${SETUP_DIR}/configs/hermes/config.yaml" ]; then
-        cp "${SETUP_DIR}/configs/hermes/config.yaml" ~/.hermes/config.yaml
+        cp "${SETUP_DIR}/configs/hermes/config.yaml" "${PROFILE_DIR}/config.yaml"
+        cp "${SETUP_DIR}/configs/hermes/config.yaml" "${HERMES_ROOT}/config.yaml"
     fi
 
-    # Create default clean LocalAIDemoUser memory profile
-    cat <<'EOF' > ~/.hermes/memories/USER.md
-# USER PROFILE — LocalAIDemoUser
-- Account: Local AI Workstation Demo User
+    # Create profile memory document
+    cat <<EOF > "${PROFILE_DIR}/memories/USER.md"
+# USER PROFILE — ${PROFILE_NAME}
+- Profile: ${PROFILE_NAME}
 - Preferred Mode: 100% Local Inference (Lemonade / vLLM)
 - Interface: Open WebUI (port 8080) & Hermes Agent / OpenCode CLI
 EOF
 
-    # Copy shared technical skills to ~/.hermes/skills/ if available
+    # Copy shared technical skills if available
     if [ -d "${SETUP_DIR}/configs/hermes/skills" ]; then
-        mkdir -p ~/.hermes/skills
-        rsync -av "${SETUP_DIR}/configs/hermes/skills/" ~/.hermes/skills/ 2>/dev/null || true
+        rsync -av "${SETUP_DIR}/configs/hermes/skills/" "${PROFILE_DIR}/skills/" 2>/dev/null || true
     fi
+
+    # Set active profile
+    echo "${PROFILE_NAME}" > "${HERMES_ROOT}/active_profile"
 
     # Fix permissions and install Desktop UI workspace dependencies if system Hermes is present
     if [ -d "/usr/local/lib/hermes-agent" ]; then
         echo "📦 Configuring Hermes Desktop UI workspace permissions & dependencies..."
         sudo chown -R "${USER}:${USER}" /usr/local/lib/hermes-agent 2>/dev/null || true
         chmod -R 775 /usr/local/lib/hermes-agent 2>/dev/null || true
-        (cd /usr/local/lib/hermes-agent && npm ci) || true
+        (cd /usr/local/lib/hermes-agent && npm ci) 2>/dev/null || true
         echo "✅ Hermes Desktop UI dependencies ready!"
     fi
-else
-    echo "ℹ️ [1/3] Skipping Hermes Agent configuration by default (already configured on demo device, use --hermes to reconfigure)."
 fi
 
 if [ "$INSTALL_OPENCODE" = true ]; then
@@ -153,4 +176,4 @@ else
     echo "ℹ️ Skipping OpenCode CLI installation & configuration (--skip-opencode)."
 fi
 
-echo "✅ [3/3] User session setup completed successfully for LocalAIDemoUser!"
+echo "✅ [3/3] User session setup completed successfully for profile '${PROFILE_NAME}'!"
