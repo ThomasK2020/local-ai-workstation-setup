@@ -33,6 +33,10 @@ REPO_URL="https://github.com/ThomasK2020/TK-Hermes-data.git"
 
 mkdir -p "${DATA_DIR}" "${HERMES_ROOT}" "${PROFILE_DIR}"
 
+# Kill any running Hermes daemon to release background lock and prevent profile_scope_mismatch 403
+pkill -f "hermes" 2>/dev/null || true
+pkill -f "Hermes" 2>/dev/null || true
+
 find_usb_data_dir_optional() {
     local usb_path=""
     for candidate in \
