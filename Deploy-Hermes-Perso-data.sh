@@ -128,64 +128,63 @@ restore_data() {
 
     mkdir -p "${DATA_DIR}" "${HERMES_ROOT}" "${PROFILE_DIR}" "${PROFILE_DIR}/memories" "${PROFILE_DIR}/skills" "${PROFILE_DIR}/sessions"
 
-    TK_REPO_DIR="${DATA_DIR}/TK-Hermes-data"
-    if [ ! -d "${TK_REPO_DIR}/.git" ]; then
-        echo "🌐 Cloning private repository ThomasK2020/TK-Hermes-data into ${TK_REPO_DIR}..."
-        gh repo clone ThomasK2020/TK-Hermes-data "${TK_REPO_DIR}" -- --depth 1 2>/dev/null || git clone --depth 1 "${REPO_URL}" "${TK_REPO_DIR}" 2>/dev/null || true
-    else
-        echo "🌐 Updating local TK-Hermes-data repository..."
-        (cd "${TK_REPO_DIR}" && git pull origin main 2>/dev/null || true)
+    # Determine source data directory (data/ or data/TK-Hermes-data)
+    DATA_SRC="${DATA_DIR}"
+    if [ ! -f "${DATA_SRC}/state.db.xz.part_aa" ] && [ -d "${DATA_DIR}/TK-Hermes-data" ]; then
+        DATA_SRC="${DATA_DIR}/TK-Hermes-data"
     fi
 
     sudo apt-get install -y xz-utils tar rsync 2>/dev/null || true
 
-    if [ -d "${TK_REPO_DIR}" ]; then
-        cp "${TK_REPO_DIR}/config.yaml" "${PROFILE_DIR}/" 2>/dev/null || true
-        cp "${TK_REPO_DIR}/config.yaml" "${HERMES_ROOT}/" 2>/dev/null || true
-        cp "${TK_REPO_DIR}/.env" "${PROFILE_DIR}/" 2>/dev/null || true
-        cp "${TK_REPO_DIR}/.env" "${HERMES_ROOT}/" 2>/dev/null || true
+    if [ -d "${DATA_SRC}" ]; then
+        echo "📦 Extracting profile configs, memories, and databases from ${DATA_SRC}..."
+
+        [ -f "${DATA_SRC}/config.yaml" ] && cp "${DATA_SRC}/config.yaml" "${PROFILE_DIR}/" 2>/dev/null || true
+        [ -f "${DATA_SRC}/config.yaml" ] && cp "${DATA_SRC}/config.yaml" "${HERMES_ROOT}/" 2>/dev/null || true
+        [ -f "${DATA_SRC}/.env" ] && cp "${DATA_SRC}/.env" "${PROFILE_DIR}/" 2>/dev/null || true
+        [ -f "${DATA_SRC}/.env" ] && cp "${DATA_SRC}/.env" "${HERMES_ROOT}/" 2>/dev/null || true
         chmod 600 "${PROFILE_DIR}/.env" "${HERMES_ROOT}/.env" 2>/dev/null || true
-        cp "${TK_REPO_DIR}/SOUL.md" "${PROFILE_DIR}/" 2>/dev/null || true
+        [ -f "${DATA_SRC}/SOUL.md" ] && cp "${DATA_SRC}/SOUL.md" "${PROFILE_DIR}/" 2>/dev/null || true
 
         for db_file in projects.db shared-state.db kanban.db; do
-            cp "${TK_REPO_DIR}/${db_file}" "${PROFILE_DIR}/" 2>/dev/null || true
-            cp "${TK_REPO_DIR}/${db_file}" "${HERMES_ROOT}/" 2>/dev/null || true
+            [ -f "${DATA_SRC}/${db_file}" ] && cp "${DATA_SRC}/${db_file}" "${PROFILE_DIR}/" 2>/dev/null || true
+            [ -f "${DATA_SRC}/${db_file}" ] && cp "${DATA_SRC}/${db_file}" "${HERMES_ROOT}/" 2>/dev/null || true
         done
 
         for folder in memories cron plugins hooks scripts; do
-            if [ -d "${TK_REPO_DIR}/${folder}" ]; then
-                rsync -av "${TK_REPO_DIR}/${folder}/" "${PROFILE_DIR}/${folder}/" 2>/dev/null || true
-                rsync -av "${TK_REPO_DIR}/${folder}/" "${HERMES_ROOT}/${folder}/" 2>/dev/null || true
+            if [ -d "${DATA_SRC}/${folder}" ]; then
+                rsync -av "${DATA_SRC}/${folder}/" "${PROFILE_DIR}/${folder}/" 2>/dev/null || true
+                rsync -av "${DATA_SRC}/${folder}/" "${HERMES_ROOT}/${folder}/" 2>/dev/null || true
             fi
         done
 
-        # Reassemble state.db.xz.part_* directly into profile directory
-        if ls "${TK_REPO_DIR}"/state.db.xz.part_* &>/dev/null; then
+        # Reassemble state.db.xz.part_* directly into profile directory AND default root
+        if ls "${DATA_SRC}"/state.db.xz.part_* &>/dev/null; then
             echo "📦 Reassembling state.db from repository parts..."
             TMP_XZ=$(mktemp /tmp/state_db_XXXXXX.xz)
-            cat "${TK_REPO_DIR}"/state.db.xz.part_* > "${TMP_XZ}"
+            cat "${DATA_SRC}"/state.db.xz.part_* > "${TMP_XZ}"
             unxz -c "${TMP_XZ}" > "${PROFILE_DIR}/state.db" 2>/dev/null || xz -d -c "${TMP_XZ}" > "${PROFILE_DIR}/state.db" 2>/dev/null || true
             cp "${PROFILE_DIR}/state.db" "${HERMES_ROOT}/state.db" 2>/dev/null || true
             rm -f "${TMP_XZ}"
             echo "✅ Conversation database (state.db) restored!"
-        elif [ -f "${TK_REPO_DIR}/state.db.gz" ]; then
-            gunzip -c "${TK_REPO_DIR}/state.db.gz" > "${PROFILE_DIR}/state.db"
+        elif [ -f "${DATA_SRC}/state.db.gz" ]; then
+            gunzip -c "${DATA_SRC}/state.db.gz" > "${PROFILE_DIR}/state.db"
             cp "${PROFILE_DIR}/state.db" "${HERMES_ROOT}/state.db" 2>/dev/null || true
             echo "✅ Conversation database (state.db) restored!"
         fi
 
         # Extract sessions.tar.xz
-        if [ -f "${TK_REPO_DIR}/sessions.tar.xz" ]; then
+        if [ -f "${DATA_SRC}/sessions.tar.xz" ]; then
             echo "📦 Extracting chat sessions.tar.xz into profile '${PROFILE_NAME}'..."
-            tar -xf "${TK_REPO_DIR}/sessions.tar.xz" -C "${PROFILE_DIR}" 2>/dev/null || true
-            tar -xf "${TK_REPO_DIR}/sessions.tar.xz" -C "${HERMES_ROOT}" 2>/dev/null || true
+            tar -xf "${DATA_SRC}/sessions.tar.xz" -C "${PROFILE_DIR}" 2>/dev/null || true
+            tar -xf "${DATA_SRC}/sessions.tar.xz" -C "${HERMES_ROOT}" 2>/dev/null || true
             echo "✅ Chat sessions restored!"
         fi
 
         # Extract skills
-        if [ -d "${TK_REPO_DIR}/skills" ]; then
-            rsync -av "${TK_REPO_DIR}/skills/" "${PROFILE_DIR}/skills/" 2>/dev/null || true
-            rsync -av "${TK_REPO_DIR}/skills/" "${HERMES_ROOT}/skills/" 2>/dev/null || true
+        if [ -d "${DATA_SRC}/skills" ]; then
+            rsync -av "${DATA_SRC}/skills/" "${PROFILE_DIR}/skills/" 2>/dev/null || true
+            rsync -av "${DATA_SRC}/skills/" "${HERMES_ROOT}/skills/" 2>/dev/null || true
             echo "✅ Skills restored!"
         fi
     fi
