@@ -23,8 +23,10 @@ VLLM_API="http://localhost:8000"
 VLLM_CACHE="/var/lib/ai-models/huggingface/hub"
 LEMONADE_CACHE="/var/snap/lemonade-server/common/.cache"
 
-# Auto-detect engine if vllm service is active or systemd unit exists
-if [ "${ENGINE}" == "vllm" ] || systemctl is-active --quiet vllm.service 2>/dev/null || [ -f /etc/systemd/system/vllm.service ]; then
+# Auto-detect engine if not explicitly forced
+if [ "${ENGINE}" == "lemonade" ]; then
+    ENGINE="lemonade"
+elif [ "${ENGINE}" == "vllm" ] || systemctl is-active --quiet vllm.service 2>/dev/null; then
     ENGINE="vllm"
 fi
 

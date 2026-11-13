@@ -58,7 +58,10 @@ HERMES_ROOT="${HOME}/.hermes"
 PROFILE_DIR="${HERMES_ROOT}/profiles/${PROFILE_NAME}"
 
 if [ "$CONFIGURE_HERMES" = true ]; then
-    echo "⚙️ [1/3] Configuring Hermes Agent profile '${PROFILE_NAME}'..."
+    echo "⚙️ [1/3] Registering & Configuring Hermes Agent profile '${PROFILE_NAME}'..."
+    if command -v hermes &>/dev/null; then
+        hermes profile create "${PROFILE_NAME}" 2>/dev/null || true
+    fi
     mkdir -p "${HERMES_ROOT}" "${PROFILE_DIR}" "${PROFILE_DIR}/memories" "${PROFILE_DIR}/skills"
 
     # Handle reset/backup of previous state.db if --reset-demo is specified
