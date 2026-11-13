@@ -33,9 +33,11 @@ REPO_URL="https://github.com/ThomasK2020/TK-Hermes-data.git"
 
 mkdir -p "${DATA_DIR}" "${HERMES_ROOT}" "${PROFILE_DIR}"
 
-# Kill any running Hermes daemon to release background lock and prevent profile_scope_mismatch 403
-pkill -f "hermes" 2>/dev/null || true
-pkill -f "Hermes" 2>/dev/null || true
+# Safely stop background Hermes processes if running (exact binary match only, never shell scripts)
+killall -9 -q hermes 2>/dev/null || true
+killall -9 -q Hermes 2>/dev/null || true
+rm -f "${HERMES_ROOT}/auth.json" "${HERMES_ROOT}/auth.lock" "${HERMES_ROOT}/gateway.lock" "${HERMES_ROOT}/processes.json" 2>/dev/null || true
+rm -f "${PROFILE_DIR}/auth.json" "${PROFILE_DIR}/auth.lock" "${PROFILE_DIR}/gateway.lock" 2>/dev/null || true
 
 find_usb_data_dir_optional() {
     local usb_path=""
