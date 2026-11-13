@@ -107,7 +107,7 @@ echo "${PROFILE_NAME}" > "${HERMES_ROOT}/active_profile"
 
 # Register profile with Hermes CLI
 if command -v hermes &>/dev/null; then
-    hermes profile create "${PROFILE_NAME}" 2>/dev/null || true
+    hermes profile create "${PROFILE_NAME}" 2>/dev/null || hermes profile use "${PROFILE_NAME}" 2>/dev/null || hermes profile switch "${PROFILE_NAME}" 2>/dev/null || true
     hermes profile switch "${PROFILE_NAME}" 2>/dev/null || true
 fi
 
