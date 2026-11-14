@@ -1,6 +1,6 @@
 ---
 title: Explication Script Setup Workstation AI
-last_updated: 2026-11-13 18:30:00 CEST
+last_updated: 2026-11-13 18:45:00 CEST
 author: Hermes Agent
 vault_folder: AMD TokenWatcher Radeon Linux
 tags: [local-ai, hp-z2-mini, hp-z6, architecture, setup, hermes, lemonade, vllm, opencode, openwebui]
@@ -8,7 +8,7 @@ tags: [local-ai, hp-z2-mini, hp-z6, architecture, setup, hermes, lemonade, vllm,
 
 # 🚀 Guide & Spécifications Spécifiques du Kit de Déploiement IA Locale
 
-Ce document détaille l'architecture complète, la cartographie des ports configurables, le fonctionnement du proxy **Lemonade ↔ OpenCode**, et l'enchaînement orchestré des scripts d'installation pour les stations **HP Z2 Mini G1a (AMD Strix Halo 128 Go)** et **Serveur HP Z6 (Multi-GPU)**.
+Ce document détaille l'architecture complète, la cartographie des ports configurables, la matrice des options du script chef d'orchestre, le fonctionnement du proxy **Lemonade ↔ OpenCode**, et l'enchaînement orchestré des scripts d'installation pour les stations **HP Z2 Mini G1a (AMD Strix Halo 128 Go)** et **Serveur HP Z6 (Multi-GPU)**.
 
 ---
 
@@ -36,8 +36,9 @@ Ce document détaille l'architecture complète, la cartographie des ports config
 
 ---
 
-## 🎛️ 3. Cartographie & Configurabilité des Ports
+## 🎛️ 3. Cartographie des Ports & Matrice Complète des Options CLI
 
+### 3.1 Cartographie des Ports
 Tous les ports de l'architecture sont paramétrables à la demande via les options CLI de `setup-from-scratch.sh` et `setup.sh` :
 
 | Composant / Service | Port par Défaut | Exemple Sur Mesure | Drapeau CLI / Option | Rôle & Connexion |
@@ -48,6 +49,24 @@ Tous les ports de l'architecture sont paramétrables à la demande via les optio
 | **Proxy Lemonade ↔ OpenCode** | **`13306`** | **`13306`** | `--proxy-port 13306` | Intermediate translation OpenAI API pour OpenCode CLI |
 | **Open WebUI (Docker / Service)** | **`8082`** | **`8082`** | `--webui-port 8082` | Interface Web d'équipe (mappée Docker `-p 8082:8080`) |
 | **Hermes Agent Gateway** | **`13305`** | `13305` | `--hermes-port 13305` | Port daemon/API interne de Hermes Agent |
+
+### 3.2 Matrice Complète des Options du Script `setup-from-scratch.sh`
+
+| Option CLI | Type | Valeur par Défaut | Description & Action |
+| :--- | :--- | :--- | :--- |
+| **`--profile <nom>`** | Profil | `amd-tk` | Déclenche l'Étape 0 (Hermes First) et restaure le profil spécifié (`state.db`, sessions, mémoires). |
+| **`--without-hermes`** / **`--skip-hermes`** | Switch | `false` (Hermes activé) | Saute intégralement l'installation et la restauration de Hermes Agent sans interrompre la suite du système. |
+| **`--lemonade`** | Moteur | Optionnel | Active le moteur Lemonade Server (idéal pour APU AMD Strix Halo / Vulkan / ROCm). |
+| **`--vllm`** | Moteur | Optionnel | Active le moteur vLLM Server sur GPU (idéal pour Serveur HP Z6 Multi-GPU). |
+| **`--proxy-port <port>`** | Port | **`13306`** | Définit le port d'écoute du proxy Python `lemonade-opencode-proxy.py` pour OpenCode CLI. |
+| **`--lemonade-vulkan-port <port>`** | Port | **`8001`** | Définit le port d'écoute du backend Lemonade Vulkan. |
+| **`--lemonade-rocm-port <port>`** | Port | **`8002`** | Définit le port d'écoute du backend Lemonade ROCm. |
+| **`--vllm-port <port>`** | Port | **`8000`** | Définit le port d'écoute du serveur vLLM. |
+| **`--webui-port <port>`** | Port | **`8082`** | Définit le port d'écoute du conteneur/service Open WebUI. |
+| **`--hermes-port <port>`** | Port | **`13305`** | Définit le port d'API interne de Hermes Agent Gateway. |
+| **`--usb-import <chemin_USB>`** | Import | Aucun (Download en ligne) | Si fourni, active l'importation hors-ligne des modèles LLM depuis la clé USB. |
+| **`--skip-opencode`** | Contournement | `false` | Saute l'installation et la configuration d'OpenCode CLI. |
+| **`--skip-projects`** | Contournement | `false` | Saute le clonage des dépôts applicatifs Git et le lancement des conteneurs Docker. |
 
 ---
 
