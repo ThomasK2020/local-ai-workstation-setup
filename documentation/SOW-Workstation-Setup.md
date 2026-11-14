@@ -1,5 +1,5 @@
 ---
-title: Explication Script Setup Workstation AI
+title: (current 13-11) SOW Workstation Setup
 last_updated: 2026-11-13 20:15:00 CEST
 author: Hermes Agent
 vault_folder: AMD Local AI Project/Workstation Setup
