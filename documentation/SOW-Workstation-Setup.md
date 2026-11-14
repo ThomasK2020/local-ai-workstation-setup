@@ -1,6 +1,6 @@
 ---
 title: Explication Script Setup Workstation AI
-last_updated: 2026-11-13 19:45:00 CEST
+last_updated: 2026-11-13 20:00:00 CEST
 author: Hermes Agent
 vault_folder: AMD Local AI Project/Workstation Setup
 tags: [local-ai, hp-z2-mini, hp-z6, architecture, setup, hermes, lemonade, vllm, opencode, openwebui, docker]
@@ -73,40 +73,61 @@ Tous les ports de l'architecture sont paramétrables à la demande via les optio
 
 ---
 
-## 🐳 4. Stratégie & Architecture Docker
+## 🐳 4. STRATÉGIE & ARCHITECTURE DOCKER (ANALYSE & AMÉLIORATIONS)
 
-### 4.1 Configuration du Moteur Docker Engine (`setup.sh`)
-1. **Source Officielle :** Télécharge `docker-ce` et `docker-compose-plugin` depuis `download.docker.com`.
-2. **Rotation des Journaux (`/etc/docker/daemon.json`) :**
-   ```json
-   {
-     "log-driver": "json-file",
-     "log-opts": {
-       "max-size": "50m",
-       "max-file": "3"
-     },
-     "default-address-pools": [
-       {
-         "base": "172.28.0.0/16",
-         "size": 24
-       }
-     ]
-   }
-   ```
-3. **Gestion des Groupes & Accès GPU :** Les utilisateurs `$SUDO_USER`, `hp-amd-localai` et `appmanager` sont ajoutés aux groupes `docker`, `render`, `video`, `ai-services`.
+### 4.1 Analyse du Setup Docker Actuel (Fonctionnement Existant)
+1. **Installation du Moteur Docker Engine (`setup.sh`) :**
+   - Télécharge et installe `docker-ce`, `docker-ce-cli`, `containerd.io` et `docker-compose-plugin` depuis `download.docker.com`.
+   - Fallback automatique sur les paquets Ubuntu `docker.io` si le dépôt officiel échoule.
+   - Configure la rotation des journaux Docker `/etc/docker/daemon.json` (`max-size: 50m`, `max-file: 3`).
+   - Assigne les utilisateurs (`$SUDO_USER`, `hp-amd-localai`, `appmanager`) aux groupes `docker`, `render`, `video`, `ai-services`.
+2. **Gestion d'Open WebUI (Historique) :**
+   - Tentait une installation native `pip install open-webui` qui échouait sous Ubuntu 24.04+ (Python 3.13+), puis basculait sur le conteneur Docker officiel en mode `--network host` fixé sur le port `8080`.
+3. **Conteneurs Applicatifs Démo (`setup-docker-projects.sh`) :**
+   - Utilise Docker Compose pour lancer `flatfox`, `astra-monitor` et `pirates-bay-sandbox` (bridé à 4 Go RAM / 2 CPUs).
 
-### 4.2 Déploiement Conteneurisé Direct Open WebUI
-Pour éviter tout conflit avec Python 3.13+ sur Ubuntu 24.04+, Open WebUI est déployé sous forme de conteneur Docker direct mappé sur le port choisi (`-p 8082:8080`) :
-```bash
-docker run -d \
-  --name open-webui \
-  -p ${WEBUI_PORT:-8082}:8080 \
-  -e WEBUI_SECRET_KEY="${WEBUI_SECRET}" \
-  -e OPENAI_API_BASE_URL="${OPENWEBUI_OPENAI_URL}" \
-  -v open-webui-data:/app/backend/data \
-  --restart always \
-  ghcr.io/open-webui/open-webui:main
-```
+### 4.2 Propositions d'Améliorations Intégrées (Refonte Révision 4.1)
+* **Amélioration 1 : Déploiement Direct Conteneurisé d'Open WebUI avec Port Mapping Dynamique**
+  - Suppression de la tentative `pip` inutile : Open WebUI est déployé directement sous forme de conteneur Docker officiel avec port hôte personnalisable (`-p ${WEBUI_PORT:-8082}:8080`).
+  - Strict respect de la confidentialité des clés : La clé API Gemini reste strictly réservée à Hermes Agent (`~/.hermes/.env`) et n'est JAMAIS injectée dans Open WebUI.
+  ```bash
+  docker run -d \
+    --name open-webui \
+    -p ${WEBUI_PORT:-8082}:8080 \
+    -e WEBUI_SECRET_KEY="${WEBUI_SECRET}" \
+    -e OPENAI_API_BASE_URL="${OPENWEBUI_OPENAI_URL}" \
+    -v open-webui-data:/app/backend/data \
+    --restart always \
+    ghcr.io/open-webui/open-webui:main
+  ```
+* **Amélioration 2 : Configuration Avancée du Daemon (`/etc/docker/daemon.json`)**
+  - Ajout des poules d'adresses réseau sous-jacentes pour éviter les conflits d'IPs avec le réseau local :
+  ```json
+  {
+    "log-driver": "json-file",
+    "log-opts": {
+      "max-size": "50m",
+      "max-file": "3"
+    },
+    "default-address-pools": [
+      {
+        "base": "172.28.0.0/16",
+        "size": 24
+      }
+    ]
+  }
+  ```
+* **Amélioration 3 : Opt-In Stricte et Isolation des Modules Applicatifs**
+  - Aucun conteneur projet n'est démarré par défaut -> Déclenché uniquement si `--setup-projects` ou `--module <nom>` est passé.
+
+### 4.3 Comportement selon le Cas d'Usage (Use Case Matrix)
+
+| Cas d'Usage Exécuté | Commande CLI | Comportement & Services Docker Déployés |
+| :--- | :--- | :--- |
+| **Cas 1 : OpenCode + Lemonade + Docker (Sans vLLM)** | `sudo ./setup-from-scratch.sh --lemonade --setup-opencode --setup-projects --webui-port 8082` | Moteur Lemonade APU (`13305`/`8001`), Proxy OpenCode (`13306`), Conteneur Open WebUI (`-p 8082:8080`), Conteneurs Docker applicatifs (`flatfox`, `pirates-bay`). **vLLM 100% ignoré**. |
+| **Cas 2 : Socle Minimal Core (Sans Docker ni Projets)** | `sudo ./setup-from-scratch.sh --lemonade` | Installe Docker Engine mais **ne lance aucun conteneur**. Lemonade et Hermes seuls. |
+| **Cas 3 : Déploiement DUAL-ENGINE de Démo (Lemonade + vLLM + Docker)** | `sudo ./setup-from-scratch.sh --both-engines --setup-projects --webui-port 8082` | Lemonade (`13305`) ET vLLM (`8000`) actifs. Open WebUI connecté au moteur principal. Conteneurs applicatifs lancés. |
+| **Cas 4 : Module Spécifique à la Carte (ex: Widget TokenWatcher)** | `./setup-projects.sh --module tokenwatcher` | Ne lance aucun conteneur Docker applicatif lourd. Installe uniquement l'extension GNOME Topbar. |
 
 ---
 
@@ -140,7 +161,6 @@ sudo ./setup-from-scratch.sh \
   --proxy-port 13306 \
   --webui-port 8082
 ```
-* **Ce qui se passe :** Lemonade (Vulkan `8001` / ROCm `8002`) et le proxy OpenCode (`13306`) sont déployés. OpenCode CLI est configuré sur le port `13306`. Les conteneurs Docker (`open-webui` sur `8082`, `flatfox`, `pirates-bay`) sont lancés. **vLLM est 100% ignoré** (aucun venv `/var/lib/vllm-env/`, aucun service `vllm.service`).
 
 ### 🚀 B. Socle Minimal Core (Lemonade + Hermes seul) :
 ```bash
