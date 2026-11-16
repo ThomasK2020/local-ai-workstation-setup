@@ -34,6 +34,10 @@ while [[ $# -gt 0 ]]; do
             ENGINE_CHOICE="1"
             shift
             ;;
+        --both-engines|--dual-engine|--both)
+            ENGINE_CHOICE="3"
+            shift
+            ;;
         --with-hermes|-hermes-setup|--hermes-setup)
             INSTALL_HERMES=true
             shift
@@ -97,7 +101,7 @@ chmod +x /etc/profile.d/10-local-bin.sh
 
 if [ "$INSTALL_HERMES" = true ]; then
     echo "⚙️ Installing Hermes Agent non-interactively..."
-    HERMES_NON_INTERACTIVE=1 HERMES_YES=1 DEBIAN_FRONTEND=noninteractive curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash -s -- --yes --non-interactive || true
+    curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash -s -- --non-interactive || true
     
     # Fix permissions on /usr/local/lib/hermes-agent for user npm dependencies (Desktop GUI)
     REAL_USER="${SUDO_USER:-$LOGNAME}"
@@ -184,17 +188,45 @@ chmod -R 775 /var/lib/ai-models /var/lib/lemonade
 chmod g+s /var/lib/ai-models /var/lib/lemonade
 
 echo "======================================================================"
-echo "🎯 [Step 5/8] Inference Engine Selection (Lemonade vs vLLM)"
+echo "🎯 [Step 5/8] Inference Engine Selection (Lemonade vs vLLM vs Dual-Engine)"
 echo "======================================================================"
 if [ -z "${ENGINE_CHOICE:-}" ]; then
     echo "1) Lemonade (HP Z2 Mini Workstations - AMD Strix Halo / Vulkan)"
     echo "2) vLLM (HP Z6 Server - Multi-GPU / High-Throughput Multi-User)"
-    read -rp "Select inference engine [1 or 2]: " ENGINE_CHOICE
+    echo "3) Dual-Engine (Lemonade on port 13305 AND vLLM on port 8000)"
+    read -rp "Select inference engine [1, 2, or 3]: " ENGINE_CHOICE
 else
     echo "ℹ️ Engine choice pre-selected via CLI flag: ENGINE_CHOICE=${ENGINE_CHOICE}"
 fi
 
-if [ "$ENGINE_CHOICE" == "2" ]; then
+if [ "$ENGINE_CHOICE" == "3" ]; then
+    export ENGINE="both"
+    echo "⚙️ [Dual-Engine Mode] Installing BOTH Lemonade (Snap port 13305) AND vLLM (/var/lib/vllm-env port 8000)..."
+    
+    # 1. Install Lemonade Snap
+    snap install lemonade-server || snap refresh lemonade-server || true
+    systemctl disable --now lemonade.service 2>/dev/null || true
+    rm -f /etc/systemd/system/lemonade.service
+    systemctl daemon-reload
+    snap start lemonade-server.daemon 2>/dev/null || systemctl enable --now snap.lemonade-server.daemon.service 2>/dev/null || true
+    mkdir -p /var/snap/lemonade-server/common/.cache
+    chmod -R 777 /var/snap/lemonade-server/common/.cache 2>/dev/null || true
+
+    # 2. Install vLLM in dedicated venv
+    apt-get install -y python3-full python3-venv build-essential libffi-dev
+    mkdir -p /var/lib/vllm-env
+    python3 -m venv /var/lib/vllm-env
+    /var/lib/vllm-env/bin/pip install --upgrade pip setuptools wheel
+    /var/lib/vllm-env/bin/pip install vllm torch || true
+    chown -R appmanager:ai-services /var/lib/vllm-env 2>/dev/null || true
+    
+    if [ -f "${SETUP_DIR}/configs/systemd/vllm.service" ]; then
+        cp "${SETUP_DIR}/configs/systemd/vllm.service" /etc/systemd/system/vllm.service
+    fi
+    systemctl daemon-reload
+    systemctl enable --now vllm.service
+    OPENWEBUI_OPENAI_URL="http://localhost:13305/v1"
+elif [ "$ENGINE_CHOICE" == "2" ]; then
     export ENGINE="vllm"
     echo "⚙️ Installing vLLM engine in dedicated venv (/var/lib/vllm-env) for HP Z6 Server..."
     apt-get install -y python3-full python3-venv build-essential libffi-dev

@@ -42,6 +42,10 @@ while [[ $# -gt 0 ]]; do
             ENGINE_FLAG="--lemonade"
             shift
             ;;
+        --both-engines|--dual-engine|--both)
+            ENGINE_FLAG="--both-engines"
+            shift
+            ;;
         --with-hermes|-hermes-setup)
             WITH_HERMES=true
             shift
