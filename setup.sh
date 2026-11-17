@@ -18,14 +18,35 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 INSTALL_HERMES=false
+DOCKER_SUBNET_POOL="172.28.0.0/16"
 REPO_URL="https://github.com/ThomasK2020/local-ai-workstation-setup.git"
 SETUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 ENGINE_CHOICE=""
 
+show_help() {
+    echo "======================================================================"
+    echo "🤖 SETUP.SH — System Infrastructure & Docker Installer"
+    echo "======================================================================"
+    echo "Usage: sudo ./setup.sh [options]"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help                     Show this help message"
+    echo "  --lemonade, --engine-lemonade  Install Lemonade Engine (APU AMD Strix Halo / Vulkan)"
+    echo "  --vllm, --engine-vllm          Install vLLM Engine (Multi-GPU Server)"
+    echo "  --both-engines, --dual-engine  Install BOTH Lemonade (13305) AND vLLM (8000) engines"
+    echo "  --docker-subnet <CIDR>         Set custom Docker address pool CIDR (default: 172.28.0.0/16)"
+    echo "  --with-hermes, --hermes-setup  Install Hermes Agent non-interactively"
+    echo ""
+    exit 0
+}
+
 # Parse CLI parameters
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        -h|--help)
+            show_help
+            ;;
         --vllm|--engine-vllm)
             ENGINE_CHOICE="2"
             shift
@@ -37,6 +58,10 @@ while [[ $# -gt 0 ]]; do
         --both-engines|--dual-engine|--both)
             ENGINE_CHOICE="3"
             shift
+            ;;
+        --docker-subnet)
+            DOCKER_SUBNET_POOL="$2"
+            shift 2
             ;;
         --with-hermes|-hermes-setup|--hermes-setup)
             INSTALL_HERMES=true
@@ -140,21 +165,23 @@ if ! apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plug
     apt-get install -y docker.io docker-compose-v2 containerd
 fi
 
-# 3. Configure Docker log-rotation daemon.json
+# 3. Configure Docker log-rotation & variabilized address pool in daemon.json
 mkdir -p /etc/docker
-if [ -f "${SETUP_DIR}/configs/docker/daemon.json" ]; then
-    cp "${SETUP_DIR}/configs/docker/daemon.json" /etc/docker/daemon.json
-else
-    cat <<'EOF' > /etc/docker/daemon.json
+cat <<EOF > /etc/docker/daemon.json
 {
   "log-driver": "json-file",
   "log-opts": {
     "max-size": "50m",
     "max-file": "3"
-  }
+  },
+  "default-address-pools": [
+    {
+      "base": "${DOCKER_SUBNET_POOL:-172.28.0.0/16}",
+      "size": 24
+    }
+  ]
 }
 EOF
-fi
 
 systemctl daemon-reload
 systemctl unmask docker.service docker.socket 2>/dev/null || true

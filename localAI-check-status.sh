@@ -10,6 +10,34 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+show_help() {
+    echo "======================================================================"
+    echo "🔍 LOCALAI-CHECK-STATUS.SH — Health Check & Diagnostic Tool"
+    echo "======================================================================"
+    echo "Usage: ./localAI-check-status.sh [options]"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help    Show this help message"
+    echo ""
+    echo "Checks performed:"
+    echo "  1. Lemonade Server status & loaded models (Port 13305)"
+    echo "  2. vLLM Server status & loaded models (Port 8000)"
+    echo "  3. OpenCode Proxy API status (Port 13306)"
+    echo "  4. Open WebUI status (Port 8082 / 8080)"
+    echo "  5. Hermes Agent CLI & active profile name"
+    echo "  6. Docker Engine & running container list"
+    echo ""
+    exit 0
+}
+
+for arg in "$@"; do
+    case "$arg" in
+        -h|--help)
+            show_help
+            ;;
+    esac
+done
+
 echo "======================================================================"
 echo -e "${BLUE}🔍 LOCAL AI WORKSTATION STATUS DIAGNOSTIC${NC}"
 echo "======================================================================"

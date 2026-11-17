@@ -17,19 +17,41 @@ SETUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEMO_MODE=true
 RESET_DEMO=false
 ASK_GEMINI=false
-INSTALL_OPENCODE=true
+INSTALL_OPENCODE=false
 CONFIGURE_HERMES=true
 PROFILE_NAME="amd-tk"
+
+show_help() {
+    echo "======================================================================"
+    echo "🤖 SETUP-USER.SH — User Session & OpenCode Configuration"
+    echo "======================================================================"
+    echo "Usage: bash setup-user.sh [options]"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help                          Show this help message"
+    echo "  --profile <name>                    Set Hermes profile to configure (default: amd-tk)"
+    echo "  --setup-opencode, --with-opencode   Install & configure OpenCode CLI"
+    echo "  --reset-demo, --force-demo          Backup existing state.db before setup"
+    echo ""
+    exit 0
+}
 
 # Parse CLI arguments
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        -h|--help)
+            show_help
+            ;;
         --profile|-p)
             PROFILE_NAME="$2"
             shift 2
             ;;
         --hermes|--with-hermes)
             CONFIGURE_HERMES=true
+            shift
+            ;;
+        --setup-opencode|--with-opencode)
+            INSTALL_OPENCODE=true
             shift
             ;;
         --skip-opencode|--without-opencode)

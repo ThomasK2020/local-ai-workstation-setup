@@ -5,18 +5,48 @@
 set -euo pipefail
 
 ENGINE="${ENGINE:-lemonade}"
+CUSTOM_MODEL=""
+
+show_help() {
+    echo "======================================================================"
+    echo "📥 DOWNLOAD-MODELS.SH — LLM Model Pre-loader & Hugging Face Downloader"
+    echo "======================================================================"
+    echo "Usage: bash download-models.sh [options]"
+    echo ""
+    echo "Options:"
+    echo "  -h, --help                          Show this help message"
+    echo "  --lemonade, lemonade                Download models for Lemonade Engine"
+    echo "  --vllm, vllm                        Download models for vLLM Engine"
+    echo "  --both-engines, --dual-engine, both Download models for BOTH Lemonade & vLLM"
+    echo "  --model <id_or_url>                 Download specific Hugging Face model ID or name"
+    echo ""
+    exit 0
+}
 
 # Parse CLI arguments for download-models.sh
-for arg in "$@"; do
-    case "$arg" in
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -h|--help)
+            show_help
+            ;;
         --vllm|vllm|--engine-vllm)
             ENGINE="vllm"
+            shift
             ;;
         --lemonade|lemonade|--engine-lemonade)
             ENGINE="lemonade"
+            shift
             ;;
         --both-engines|--dual-engine|both)
             ENGINE="both"
+            shift
+            ;;
+        --model)
+            CUSTOM_MODEL="$2"
+            shift 2
+            ;;
+        *)
+            shift
             ;;
     esac
 done
@@ -41,6 +71,11 @@ download_vllm_models() {
         "unsloth/Qwen3.6-35B-A3B-GGUF"
         "unsloth/DeepSeek-Qwen3-8B-GGUF"
     )
+
+    if [ -n "${CUSTOM_MODEL}" ]; then
+        HF_REPOS=("${CUSTOM_MODEL}")
+        echo "ℹ️ Downloading custom specified model: ${CUSTOM_MODEL}"
+    fi
 
     echo "🔍 Checking Hugging Face download availability for vLLM..."
     if command -v huggingface-cli &>/dev/null || python3 -c "import huggingface_hub" 2>/dev/null; then
@@ -105,6 +140,11 @@ download_lemonade_models() {
         "Qwen3.6-27B-GGUF"
         "DeepSeek-Qwen3-8B-GGUF"
     )
+
+    if [ -n "${CUSTOM_MODEL}" ]; then
+        MODELS=("${CUSTOM_MODEL}")
+        echo "ℹ️ Downloading custom specified model: ${CUSTOM_MODEL}"
+    fi
 
     for MODEL in "${MODELS[@]}"; do
         if echo "${EXISTING_MODELS}" | grep -qi "${MODEL}"; then
