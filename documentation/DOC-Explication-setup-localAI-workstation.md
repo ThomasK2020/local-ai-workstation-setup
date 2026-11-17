@@ -1,5 +1,5 @@
 ---
-title: (current 13-11) SOW Workstation Setup
+title: DOC Explication setup localAI workstation
 last_updated: 2026-11-13 21:00:00 CEST
 author: Hermes Agent
 vault_folder: AMD Local AI Project/Workstation Setup
