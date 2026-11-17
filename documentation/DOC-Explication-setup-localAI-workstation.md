@@ -9,7 +9,7 @@ tags: [local-ai, hp-z2-mini, hp-z6, architecture, setup, hermes, lemonade, vllm,
 # 📄 STATEMENT OF WORK (SOW) — ARCHITECTURE & SPÉCIFICATIONS COMPLÈTES DE DÉPLOIEMENT
 
 **Dépôt Central :** `ThomasK2020/local-ai-workstation-setup`  
-**Emplacement Note Maîtresse :** `/home/thomas/Documents/ThomasKRemoteVault/AMD Local AI Project/Workstation Setup/(current 13-11) SOW Workstation Setup.md`  
+**Emplacement Note Maîtresse :** `/home/thomas/Documents/ThomasKRemoteVault/AMD Local AI Project/Workstation Setup/DOC Explication setup localAI workstation.md`  
 **Machines Cibles :** HP Z2 Mini G1a (AMD Strix Halo APU 128 Go LPDDR5X) & Serveur HP Z6 (Multi-GPU)  
 **Profil IA Utilisateur :** `amd-tk` (par défaut si Hermes est activé)  
 **Auteur / Ingénieur :** Agent IA Hermes (Nous Research)  
@@ -256,3 +256,43 @@ sudo ./setup-from-scratch.sh \
 | **Script interrompu (`Terminated`)** | La commande `pgrep -f "hermes"` tuait le script `.sh` lui-même. | Remplacement par `killall` ciblant uniquement le binaire compilé. |
 | **Profile `amd-tk` introuvable** | Le profil n'a pas été inscrit dans le registre CLI Hermes. | Ajout automatique de `hermes profile create amd-tk` et `hermes profile use amd-tk`. |
 | **Pip install open-webui error (PEP 668)** | Ubuntu 24.04+ (Python 3.13+) bloque l'install globale pip. | Déploiement direct du conteneur Docker officiel Open WebUI avec mapping de port `-p 8082:8080`. |
+
+---
+
+## 📁 8. ARBORESCENCE DU DÉPÔT CENTRALISÉ (`local-ai-workstation-setup`)
+
+```text
+local-ai-workstation-setup/
+├── README.md                           <- Documentation principale & matrice des scripts
+├── setup-from-scratch.sh               <- Chef d'orchestre All-in-One (Étape 0 à Étape 6)
+├── setup.sh                            <- Script système Root (Docker Engine, Node.js 22 LTS, Snap/Venv, Open WebUI)
+├── setup-user.sh                       <- Setup utilisateur (Profil Hermes & OpenCode CLI Proxy)
+├── setup-projects.sh                   <- Gestionnaire de modules à la carte (--module tokenwatcher-topbar, etc.)
+├── setup-docker-projects.sh            <- Déploiement et orchestration des conteneurs Docker applicatifs
+├── download-models.sh                  <- Pré-chargement des modèles LLM avec vérification préalable intelligente
+├── backup-models.sh                    <- Export/Import hors-ligne des modèles IA via clé USB
+├── Deploy-Hermes-Perso-data.sh         <- Restaurateur autonome du profil personnel amd-tk (state.db 281 Mo, sessions)
+├── localAI-check-status.sh             <- Diagnostic & bilan de santé adaptatif couleur (🟢/🔴)
+├── data/                               <- Données d'historique & configuration embarquées (0% fuite de secrets)
+│   ├── state.db.xz.part_aa             <- Base SQLite d'historique de conversations (Partie 1/3)
+│   ├── state.db.xz.part_ab             <- Base SQLite d'historique de conversations (Partie 2/3)
+│   ├── state.db.xz.part_ac             <- Base SQLite d'historique de conversations (Partie 3/3)
+│   ├── sessions.tar.xz                 <- Archive des sessions de chat historiques
+│   ├── config.yaml                     <- Configuration Hermes Agent
+│   ├── SOUL.md                         <- System Persona Hermes Agent
+│   └── memories/                       <- Fichiers de mémoire durable (USER.md, MEMORY.md)
+├── documentation/                      <- Coffre de documentation Markdown synchronisé
+│   ├── DOC-Explication-setup-localAI-workstation.md  <- Guide d'explication maître
+│   └── SOW-Workstation-Setup.md                      <- Document SOW d'architecture
+└── configs/                            <- Fichiers de configurations système & services
+    ├── docker/
+    │   └── daemon.json                 <- Config daemon Docker (rotation logs & subnet CIDR variabilisé)
+    ├── systemd/
+    │   ├── vllm.service                <- Service systemd pour moteur vLLM (Port 8000)
+    │   └── open-webui.service          <- Service systemd Open WebUI
+    ├── opencode/
+    │   ├── lemonade-opencode-proxy.py  <- Proxy Python adaptateur OpenAI SSE Stream (Port 13306)
+    │   └── opencode.json               <- Configuration provider OpenCode
+    └── hermes/
+        └── config.yaml                 <- Template de configuration Hermes Agent
+```
