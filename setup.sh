@@ -353,10 +353,11 @@ else
     rm -f /etc/systemd/system/open-webui.service
     systemctl daemon-reload
     
+    BIND_PORT="${WEBUI_HOST}:${WEBUI_PORT:-8082}:8080"
     docker rm -f open-webui 2>/dev/null || true
     docker run -d \
       --name open-webui \
-      --network host \
+      -p "${BIND_PORT}" \
       -e WEBUI_HOST="${WEBUI_HOST}" \
       -e WEBUI_PORT="8080" \
       -e WEBUI_SECRET_KEY="${WEBUI_SECRET}" \
@@ -365,7 +366,7 @@ else
       -v open-webui-data:/app/backend/data \
       --restart always \
       ghcr.io/open-webui/open-webui:main
-    echo "✅ Open WebUI container deployed and running on port 8080!"
+    echo "✅ Open WebUI container deployed and running on http://${BIND_PORT%:*}/!"
 fi
 
 echo "======================================================================"

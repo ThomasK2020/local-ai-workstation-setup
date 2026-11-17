@@ -167,12 +167,14 @@ restore_data() {
             cat "${DATA_SRC}"/state.db.xz.part_* > "${TMP_XZ}"
             unxz -c "${TMP_XZ}" > "${PROFILE_DIR}/state.db" 2>/dev/null || xz -d -c "${TMP_XZ}" > "${PROFILE_DIR}/state.db" 2>/dev/null || true
             cp "${PROFILE_DIR}/state.db" "${HERMES_ROOT}/state.db" 2>/dev/null || true
+            chmod 600 "${PROFILE_DIR}/state.db" "${HERMES_ROOT}/state.db" 2>/dev/null || true
             rm -f "${TMP_XZ}"
-            echo "✅ Conversation database (state.db) restored!"
+            echo "✅ Conversation database (state.db) restored with chmod 600 permissions!"
         elif [ -f "${DATA_SRC}/state.db.gz" ]; then
             gunzip -c "${DATA_SRC}/state.db.gz" > "${PROFILE_DIR}/state.db"
             cp "${PROFILE_DIR}/state.db" "${HERMES_ROOT}/state.db" 2>/dev/null || true
-            echo "✅ Conversation database (state.db) restored!"
+            chmod 600 "${PROFILE_DIR}/state.db" "${HERMES_ROOT}/state.db" 2>/dev/null || true
+            echo "✅ Conversation database (state.db) restored with chmod 600 permissions!"
         fi
 
         # Extract sessions.tar.xz

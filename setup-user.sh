@@ -150,6 +150,9 @@ EOF
     # Set active profile
     echo "${PROFILE_NAME}" > "${HERMES_ROOT}/active_profile"
 
+    # Hermes Agent Log Cleanup (Keep logs <= 30 days)
+    find "${HERMES_ROOT}" -type f -name "*.log" -mtime +30 -delete 2>/dev/null || true
+
     # Fix permissions and install Desktop UI workspace dependencies if system Hermes is present
     if [ -d "/usr/local/lib/hermes-agent" ]; then
         echo "📦 Configuring Hermes Desktop UI workspace permissions & dependencies..."
@@ -200,7 +203,8 @@ if [ "$INSTALL_OPENCODE" = true ]; then
       }
     }
   },
-  "model": "lemonade/Qwen3-Coder-30B-A3B-Instruct-GGUF"
+  "model": "lemonade/Qwen3-Coder-30B-A3B-Instruct-GGUF",
+  "contextWindow": 65536
 }
 EOF
 else
