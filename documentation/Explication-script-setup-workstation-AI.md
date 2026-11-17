@@ -1,6 +1,6 @@
 ---
 title: (current 13-11) SOW Workstation Setup
-last_updated: 2026-11-13 20:45:00 CEST
+last_updated: 2026-11-13 21:00:00 CEST
 author: Hermes Agent
 vault_folder: AMD Local AI Project/Workstation Setup
 tags: [local-ai, hp-z2-mini, hp-z6, architecture, setup, hermes, lemonade, vllm, opencode, openwebui, docker, tokenwatcher]
@@ -117,7 +117,9 @@ L'ensemble des composants communique via des ports réseau isolés et configurab
 
 ---
 
-## 📋 4. MATRICE COMPLÈTE DES OPTIONS CLI (`setup-from-scratch.sh`)
+## 📋 4. MATRICES COMPLÈTES DES OPTIONS CLI PAR SCRIPT
+
+### 4.1 Matrice des Options du Script `setup-from-scratch.sh`
 
 | Option CLI | Type | Valeur par Défaut | Description & Action |
 | :--- | :--- | :--- | :--- |
@@ -132,9 +134,39 @@ L'ensemble des composants communique via des ports réseau isolés et configurab
 | **`--module <nom>`** | Module | Aucun | Installe sélectivement un module (`tokenwatcher-topbar`, `tokenwatcher-widget`, `flatfox`, `pirates-bay`, `dj-mix`). |
 | **`--model <id_ou_url>`** | Modèle | Modèles défaut | Spécifie un modèle LLM personnalisé ou une URL Hugging Face directe. |
 | **`--usb-import <chemin_USB>`** | Import | Aucun (Download en ligne) | Active l'importation hors-ligne des modèles LLM depuis la clé USB. |
-| **`--docker-subnet <cidr>`** | Réseau | **`172.28.0.0/16`** | **[Nouveau]** Variabilise la plage de réseau conteneurisée sous-jacente pour Docker. |
+| **`--docker-subnet <cidr>`** | Réseau | **`172.28.0.0/16`** | Variabilise la plage de réseau conteneurisée sous-jacente pour Docker. |
 | **`--proxy-port <port>`** | Port | **`13306`** | Définit le port d'écoute du proxy Python `lemonade-opencode-proxy.py` pour OpenCode CLI. |
 | **`--webui-port <port>`** | Port | **`8082`** | Définit le port d'écoute du conteneur/service Open WebUI. |
+
+### 4.2 Matrice des Options du Script `Deploy-Hermes-Perso-data.sh`
+
+| Option CLI | Type | Valeur par Défaut | Description & Action |
+| :--- | :--- | :--- | :--- |
+| **`restore`** | Action | Action par défaut | Décompresse `state.db` (281 Mo), `sessions.tar.xz` et déploie le profil dans `~/.hermes/profiles/<profile>/`. |
+| **`export`** | Action | Optionnel | Compresse et exporte `state.db` et `skills/` vers la clé USB (`/LLM-backups/Hermes-data`). |
+| **`--profile <nom>`** / **`-p <nom>`** | Profil | `amd-tk` | Spécifie le nom du profil Hermes à restaurer ou exporter. |
+
+### 4.3 Matrice des Options du Script `setup-projects.sh`
+
+| Option CLI | Type | Valeur par Défaut | Description & Action |
+| :--- | :--- | :--- | :--- |
+| **`-h`** / **`--help`** | Aide | - | Affiche l'aide CLI détaillée avec la liste des modules disponibles. |
+| **`--module tokenwatcher-topbar`** | Module | Optionnel | Clône `tokenwatcher-topbar`, installe Astra Monitor, déploie l'extension GNOME Shell TopBar et active `tokenwatcher.service`. |
+| **`--module tokenwatcher-widget`** | Module | Optionnel | Clône `TokenWatcherWidget` et configure le cockpit dashboard WebGL/HTML5 autonome. |
+| **`--module flatfox`** | Module | Optionnel | Clône `zurich-rental-flatfox-agent`, configure Google Chrome SSO et prépare le conteneur Docker. |
+| **`--module pirates-bay`** | Module | Optionnel | Clône `PiratesBayLocalAI` et prépare le bac à sable Docker (`pirates-bay-sandbox`). |
+| **`--module dj-mix`** | Module | Optionnel | Clône `DJ-Mix-Local-AI-Project` et configure le FastMCP Server. |
+| **`--all-modules`** / **`--all`** | Restauration | `false` | Restaure l'ensemble des modules applicatifs. |
+
+### 4.4 Matrice des Options du Script `download-models.sh`
+
+| Option CLI | Type | Valeur par Défaut | Description & Action |
+| :--- | :--- | :--- | :--- |
+| **`-h`** / **`--help`** | Aide | - | Affiche l'aide CLI détaillée pour le pré-chargement des modèles. |
+| **`--lemonade`** / **`lemonade`** | Moteur | `lemonade` (si vLLM inactif) | Télécharge les modèles GGUF pour Lemonade (`:13305`). Saute les modèles déjà téléchargés. |
+| **`--vllm`** / **`vllm`** | Moteur | Optionnel | Télécharge les dépôts Hugging Face dans `/var/lib/ai-models/huggingface/hub`. Saute les modèles déjà en cache. |
+| **`--both-engines`** / **`--dual-engine`** | Moteur | Optionnel | Télécharge et vérifie les modèles pour **Lemonade ET vLLM simultanément**. |
+| **`--model <id_ou_url>`** | Modèle | Modèles défaut | Spécifie un modèle LLM personnalisé ou une URL Hugging Face directe à télécharger. |
 
 ---
 
