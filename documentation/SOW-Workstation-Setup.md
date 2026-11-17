@@ -1,6 +1,6 @@
 ---
 title: (current 13-11) SOW Workstation Setup
-last_updated: 2026-11-13 20:30:00 CEST
+last_updated: 2026-11-13 20:45:00 CEST
 author: Hermes Agent
 vault_folder: AMD Local AI Project/Workstation Setup
 tags: [local-ai, hp-z2-mini, hp-z6, architecture, setup, hermes, lemonade, vllm, opencode, openwebui, docker, tokenwatcher]
@@ -138,37 +138,38 @@ L'ensemble des composants communique via des ports réseau isolés et configurab
 
 ---
 
-## 🐳 5. STRATÉGIE & ARCHITECTURE DOCKER (ANALYSE & AMÉLIORATIONS)
+## 🐳 5. STRATÉGIE & ARCHITECTURE DOCKER
 
-### 5.1 Analyse du Setup Docker Actuel (Fonctionnement Existant)
-1. **Installation du Moteur Docker Engine (`setup.sh`) :**
-   - Télécharge et installe `docker-ce`, `docker-ce-cli`, `containerd.io` et `docker-compose-plugin` depuis `download.docker.com`.
-   - Fallback automatique sur les paquets Ubuntu `docker.io` si le dépôt officiel échoue.
-   - Configure la rotation des journaux Docker `/etc/docker/daemon.json` (`max-size: 50m`, `max-file: 3`).
-   - Assigne les utilisateurs (`$SUDO_USER`, `hp-amd-localai`, `appmanager`) aux groupes `docker`, `render`, `video`, `ai-services`.
-2. **Gestion d'Open WebUI :**
-   - Déploiement direct conteneurisé d'Open WebUI sur le port hôte choisi (`-p ${WEBUI_PORT:-8082}:8080`).
+### 5.1 Architecture, Setup et Configuration de Docker
 
-### 5.2 Variabilisation Dynamique du Daemon Docker (`/etc/docker/daemon.json`)
-- **Zéro Hardcode Réseau :** La plage d'adresses sous-jacente (`base`) est **entièrement variabilisée** via l'option CLI `--docker-subnet <cidr>` (par défaut `${DOCKER_SUBNET_POOL:-172.28.0.0/16}`) pour éviter tout conflit avec le sous-réseau LAN du site ou de l'entreprise.
-- **Génération Dynamique du JSON :**
-```json
-{
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "50m",
-    "max-file": "3"
-  },
-  "default-address-pools": [
-    {
-      "base": "${DOCKER_SUBNET_POOL:-172.28.0.0/16}",
-      "size": 24
-    }
-  ]
-}
-```
+Le déploiement de Docker repose sur un moteur conteneurisé moderne, isolé et entièrement personnalisable via les scripts d'infrastructure (`setup.sh` et `setup-docker-projects.sh`) :
 
-### 5.3 Comportement selon le Cas d'Usage (Use Case Matrix)
+1. **Setup & Installation du Moteur Docker (`setup.sh`) :**
+   - **Installation Officielle :** Télécharge et installe le moteur officiel `docker-ce`, `docker-ce-cli`, `containerd.io` et `docker-compose-plugin` depuis `download.docker.com` (avec fallback automatique sur `docker.io` si le dépôt amont est indisponible).
+   - **Gestion des Droits Utilisateurs & Accès GPU :** Crée le groupe `docker` et assigne les utilisateurs (`$SUDO_USER`, `hp-amd-localai`, `appmanager`) aux groupes `docker`, `render`, `video` et `ai-services` avec les permissions `chmod 660 /var/run/docker.sock`.
+   - **Déploiement Conteneurisé Direct Open WebUI :** Open WebUI est déployé directement sous forme de conteneur Docker officiel (`ghcr.io/open-webui/open-webui:main`), éliminant tout conflit d'installation Python pip (PEP 668 sous Ubuntu 24.04+/Python 3.13+). Le port hôte est entièrement personnalisable via la variable CLI `-p ${WEBUI_PORT:-8082}:8080`.
+   - **Isolation Stricte des Clés API :** La clé API Gemini reste strictement réservée à l'agent Hermes (`~/.hermes/.env`) et n'est jamais transmise ni exposée au conteneur Open WebUI.
+
+2. **Configuration du Daemon Docker (`/etc/docker/daemon.json`) :**
+   - **Rotation des Journaux :** Limite la taille des logs des conteneurs pour préserver le disque dur (`"max-size": "50m"`, `"max-file": "3"`).
+   - **Variabilisation Réseau Sous-Jacente (Zéro Collision IP) :** La plage d'adresses sous-jacente des sous-réseaux conteneurisés est **dynamiquement variabilisée** via l'option `--docker-subnet <CIDR>` (par défaut `${DOCKER_SUBNET_POOL:-172.28.0.0/16}`) pour éviter tout conflit avec le réseau physique LAN de l'entreprise ou les liaisons VPN :
+   ```json
+   {
+     "log-driver": "json-file",
+     "log-opts": {
+       "max-size": "50m",
+       "max-file": "3"
+     },
+     "default-address-pools": [
+       {
+         "base": "${DOCKER_SUBNET_POOL:-172.28.0.0/16}",
+         "size": 24
+       }
+     ]
+   }
+   ```
+
+### 5.2 Comportement selon le Cas d'Usage (Use Case Matrix)
 
 | Cas d'Usage Exécuté | Commande CLI | Comportement & Services Docker Déployés |
 | :--- | :--- | :--- |
