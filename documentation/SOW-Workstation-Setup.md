@@ -1,5 +1,5 @@
 ---
-title: (current 13-11) SOW Workstation Setup
+title: Explication Script Setup Workstation AI
 last_updated: 2026-11-13 20:15:00 CEST
 author: Hermes Agent
 vault_folder: AMD Local AI Project/Workstation Setup
@@ -65,7 +65,7 @@ Tous les ports de l'architecture sont paramétrables à la demande via les optio
 | **`--both-engines`** / **`--dual-engine`** | Moteur | Optionnel | Déploie **simultanément Lemonade (13305) ET vLLM (8000)** pour démos/comparatifs. |
 | **`--setup-opencode`** / **`--with-opencode`** | Opt-in | `false` (Non installé) | **[Opt-in]** Active l'installation et la configuration d'OpenCode CLI. |
 | **`--setup-projects`** / **`--with-projects`** | Opt-in | `false` (Non installé) | **[Opt-in]** Active le clonage des dépôts applicatifs Git et des conteneurs Docker. |
-| **`--module <nom>`** | Module | Aucun | Installe sélectivement un module (`tokenwatcher`, `flatfox`, `pirates-bay`, `dj-mix`). |
+| **`--module <nom>`** | Module | Aucun | Installe sélectivement un module (`tokenwatcher-topbar`, `tokenwatcher-widget`, `flatfox`, `pirates-bay`, `dj-mix`). |
 | **`--model <id_ou_url>`** | Modèle | Modèles défaut | Spécifie un modèle LLM personnalisé ou une URL Hugging Face directe. |
 | **`--usb-import <chemin_USB>`** | Import | Aucun (Download en ligne) | Active l'importation hors-ligne des modèles LLM depuis la clé USB. |
 | **`--docker-subnet <cidr>`** | Réseau | **`172.28.0.0/16`** | **[Nouveau]** Variabilise la plage de réseau conteneurisée sous-jacente pour Docker. |
@@ -129,7 +129,8 @@ Tous les ports de l'architecture sont paramétrables à la demande via les optio
 | **Cas 1 : OpenCode + Lemonade + Docker (Sans vLLM)** | `sudo ./setup-from-scratch.sh --lemonade --setup-opencode --setup-projects --webui-port 8082 --docker-subnet 172.30.0.0/16` | Moteur Lemonade APU (`13305`/`8001`), Proxy OpenCode (`13306`), Conteneur Open WebUI (`-p 8082:8080`), Conteneurs Docker applicatifs sur réseau `172.30.0.0/16`. **vLLM 100% ignoré**. |
 | **Cas 2 : Socle Minimal Core (Sans Docker ni Projets)** | `sudo ./setup-from-scratch.sh --lemonade` | Installe Docker Engine mais **ne lance aucun conteneur**. Lemonade et Hermes seuls. |
 | **Cas 3 : Déploiement DUAL-ENGINE de Démo (Lemonade + vLLM + Docker)** | `sudo ./setup-from-scratch.sh --both-engines --setup-projects --webui-port 8082` | Lemonade (`13305`) ET vLLM (`8000`) actifs. Open WebUI connecté au moteur principal. Conteneurs applicatifs lancés. |
-| **Cas 4 : Module Spécifique à la Carte (ex: Widget TokenWatcher)** | `./setup-projects.sh --module tokenwatcher` | Ne lance aucun conteneur Docker applicatif lourd. Installe uniquement l'extension GNOME Topbar. |
+| **Cas 4 : Module TopBar GNOME (`tokenwatcher-topbar`)** | `./setup-projects.sh --module tokenwatcher-topbar` | Ne lance aucun conteneur Docker applicatif. Installe l'extension GNOME Shell TopBar + daemon systemd `tokenwatcher.service`. |
+| **Cas 5 : Module Cockpit Widget (`tokenwatcher-widget`)** | `./setup-projects.sh --module tokenwatcher-widget` | Ne lance aucun conteneur Docker applicatif. Installe le cockpit dashboard WebGL/HTML5 autonome. |
 
 ---
 
