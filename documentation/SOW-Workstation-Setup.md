@@ -1,12 +1,12 @@
 ---
 title: DOC Explication setup localAI workstation
-last_updated: 2026-11-13 21:00:00 CEST
+last_updated: 2026-11-13 21:15:00 CEST
 author: Hermes Agent
 vault_folder: AMD Local AI Project/Workstation Setup
-tags: [local-ai, hp-z2-mini, hp-z6, architecture, setup, hermes, lemonade, vllm, opencode, openwebui, docker, tokenwatcher]
+tags: [local-ai, hp-z2-mini, hp-z6, architecture, setup, hermes, lemonade, vllm, opencode, openwebui, docker, tokenwatcher, prerequisiets]
 ---
 
-# 📄 STATEMENT OF WORK (SOW) — ARCHITECTURE & SPÉCIFICATIONS COMPLÈTES DE DÉPLOIEMENT
+# 📄 DOCUMENTATION — ARCHITECTURE & SPÉCIFICATIONS COMPLÈTES DE DÉPLOIEMENT
 
 **Dépôt Central :** `ThomasK2020/local-ai-workstation-setup`  
 **Emplacement Note Maîtresse :** `/home/thomas/Documents/ThomasKRemoteVault/AMD Local AI Project/Workstation Setup/DOC Explication setup localAI workstation.md`  
@@ -56,24 +56,50 @@ tags: [local-ai, hp-z2-mini, hp-z6, architecture, setup, hermes, lemonade, vllm,
 
 ---
 
-## 🎛️ 2. CARTOGRAPHIE DES PORTS & MAPPING DYNAMIQUE
+## 📋 2. PRÉREQUIS SYSTÈME & DÉPENDANCES LINUX
 
-L'ensemble des composants communique via des ports réseau isolés et configurables par CLI :
+Voici la liste exhaustive de tous les prérequis indispensables pour garantir une installation sans aucun blocage sur une machine Linux neuve (Ubuntu 24.04/26.04 LTS) :
 
-| Composant / Service | Port par Défaut | Option CLI | Rôle & Inférence |
-| :--- | :--- | :--- | :--- |
-| **Lemonade Engine (Vulkan)** | **`8001`** | `--lemonade-vulkan-port 8001` | Inférence GPU/APU AMD via Vulkan/ANGLE |
-| **Lemonade Engine (ROCm)** | **`8002`** | `--lemonade-rocm-port 8002` | Inférence native AMD ROCm |
-| **Moteur vLLM (Z6 Server)** | **`8000`** | `--vllm-port 8000` | Moteur d'inférence vLLM Multi-GPU |
-| **Proxy Lemonade ↔ OpenCode** | **`13306`** | `--proxy-port 13306` | Intermediate translation OpenAI API pour OpenCode CLI |
-| **Open WebUI (Docker / Service)** | **`8082`** | `--webui-port 8082` | Interface Web d'équipe (mappée Docker `-p 8082:8080`) |
-| **Hermes Agent Gateway** | **`13305`** | `--hermes-port 13305` | Port daemon/API interne de Hermes Agent |
+### A. Outils Système & Paquets Linux (APT) :
+1. **`git` :** Requis pour cloner le kit de déploiement et les dépôts de modules.
+2. **`curl` :** Requis pour tester les endpoints HTTP et inspecter les réponses JSON.
+3. **`jq` :** Requis pour parser et extraire les valeurs dans les fichiers `.json` de configuration.
+4. **`python3`, `python3-venv`, `python3-pip` :** Requis pour créer les environnements virtuels isolés sans conflit PEP 668.
+5. **`build-essential` & `libffi-dev` :** Requis pour la compilation éventuelle de modules Python natifs.
+6. **`amdgpu_top` :** (Recommandé) Requis pour lire la VRAM et la fréquence GPU/APU AMD Radeon sur Strix Halo.
+
+### B. Permissions & Environnement Utilisateur :
+1. **Accès Sudo :** Requis **uniquement** pour l'étape initiale d'installation des paquets APT si `git`, `curl` ou `jq` sont absents.
+2. **Variable `$PATH` :** Le dossier `${HOME}/.local/bin` doit être exporté dans le `$PATH` de l'utilisateur.
+3. **Systemd Utilisateur :** Le daemon systemd utilisateur (`systemctl --user`) doit être actif pour gérer le service `tokenwatcher.service`.
+4. **Socket Docker :** L'utilisateur doit faire partie du groupe `docker` avec accès `chmod 660 /var/run/docker.sock`.
+
+### C. Endpoints Réseau & API LLM :
+1. **Lemonade Server :** Accessible sur `:13305` (ou port configuré dans `/var/snap/lemonade-server/common/config.json`).
+2. **vLLM Server :** Accessible sur `:8000` (ou port configuré dans `/etc/systemd/system/vllm.service`).
+3. **Proxy OpenCode :** Accessible sur `:13306` (service `lemonade-proxy.service`).
+4. **Open WebUI :** Accessible sur `:8082` (ou `:8080`).
 
 ---
 
-## 🛠️ 3. ORDONNANCEMENT SÉQUENTIEL DES ÉTAPES & PLAN DES SCRIPTS
+## 🎛️ 3. CARTOGRAPHIE DES PORTS & DÉTECTION DES CONFIGURATIONS SUR DISQUE
 
-### 3.1 `setup-from-scratch.sh` (Chef d'Orchestre Tout-en-Un)
+L'ensemble des composants communique via des ports réseau isolés. Le tableau ci-dessous associe chaque port aux **fichiers de configuration réels sur disque** inspectés par les scripts de déploiement :
+
+| Composant / Service | Port par Défaut | Option CLI | Rôle & Inférence | Fichier de Configuration sur Disque | Clé JSON / Paramètre à Lire |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Lemonade Engine (Vulkan)** | **`8001`** | `--lemonade-vulkan-port 8001` | Inférence GPU/APU AMD via Vulkan/ANGLE | `/var/snap/lemonade-server/common/config.json` | `"vulkan_port": 8001` |
+| **Lemonade Engine (ROCm)** | **`8002`** | `--lemonade-rocm-port 8002` | Inférence native AMD ROCm | `/var/snap/lemonade-server/common/config.json` | `"rocm_port": 8002` |
+| **Moteur vLLM (Z6 Server)** | **`8000`** | `--vllm-port 8000` | Moteur d'inférence vLLM Multi-GPU | `/etc/systemd/system/vllm.service` | Argument `--port 8000` |
+| **Proxy Lemonade ↔ OpenCode** | **`13306`** | `--proxy-port 13306` | Translation OpenAI API pour OpenCode CLI | `~/.local/bin/lemonade-opencode-proxy.py` | Option `--port 13306` |
+| **Open WebUI (Docker / Service)** | **`8082`** | `--webui-port 8082` | Interface Web d'équipe (mappée Docker `-p 8082:8080`) | `/etc/systemd/system/open-webui.service` / `docker inspect` | Variable `WEBUI_PORT=8082` |
+| **Hermes Agent Gateway** | **`13305`** | `--hermes-port 13305` | Port daemon/API interne de Hermes Agent | `~/.hermes/profiles/amd-tk/config.yaml` | `port: 13305` |
+
+---
+
+## 🛠️ 4. ORDONNANCEMENT SÉQUENTIEL DES ÉTAPES & PLAN DES SCRIPTS
+
+### 4.1 `setup-from-scratch.sh` (Chef d'Orchestre Tout-en-Un)
 * **Aide CLI `--help` / `-h` :** Affiche le menu d'aide structuré avec tous les drapeaux et exemples.
 * **Étape 0 (Hermes First) :**
   - Si `--without-hermes` / `--skip-hermes` : Saute l'Étape 0.
@@ -84,20 +110,20 @@ L'ensemble des composants communique via des ports réseau isolés et configurab
 * **Étapes 4 & 5 (Projets Git & Docker) :** Exécute `setup-projects.sh` et `setup-docker-projects.sh` uniquement si `--setup-projects` ou `--module <nom>` est passé.
 * **Étape 6 (Diagnostic Adaptatif Final) :** Exécute `./localAI-check-status.sh` pour afficher le bilan de santé 🟢/🔴.
 
-### 3.2 `Deploy-Hermes-Perso-data.sh` (Restauration Profil `amd-tk`)
+### 4.2 `Deploy-Hermes-Perso-data.sh` (Restauration Profil `amd-tk`)
 * **Résolution Auto-Terminaison (`SIGKILL`) :** Remplacement de `pgrep -f "hermes"` par `killall -9 -q hermes` (ne tue jamais le script shell).
 * **Résolution HTTP 403 `profile_scope_mismatch` :** Suppression automatique des verrous `~/.hermes/auth.json`, `gateway.lock` et `processes.json`.
-* **Extraction des Données Embarquées :** Fusion et décompression de `data/state.db.xz.part_*` -> `~/.hermes/profiles/amd-tk/state.db` (281 Mo) et décompression de `data/sessions.tar.xz`.
+* **Extraction des Données Embarquées :** Fusion et décompression de `data/state.db.xz.part_*` -> `~/.hermes/profiles/amd-tk/state.db` (281 Mo) avec permissions `chmod 600`.
 
-### 3.3 `setup-user.sh` (Session Utilisateur & OpenCode)
+### 4.3 `setup-user.sh` (Session Utilisateur & OpenCode)
 * **Protection Sudo / Non-Root :** Auto-détection de `EUID == 0` et bascule automatique sur `$SUDO_USER`.
-* **Proxy OpenCode Config :** N'installe OpenCode QUE si `--setup-opencode` est passé et configure `~/.config/opencode/config.json` sur le port proxy (`13306`).
+* **Proxy OpenCode Config :** N'installe OpenCode QUE si `--setup-opencode` est passé et configure `~/.config/opencode/config.json` sur le port proxy (`13306`) avec `"contextWindow": 65536`.
 
-### 3.4 `download-models.sh` (Téléchargement des Modèles)
+### 4.4 `download-models.sh` (Téléchargement des Modèles)
 * **Vérification Intelligente Préalable :** Interroge `:13305/v1/models` (Lemonade) ou le cache `/var/lib/ai-models/huggingface/hub/` (vLLM) et saute les modèles déjà présents en 0,1s.
 * **Support Modèles Custom :** Accepte le drapeau `--model <id_ou_url_hf>`.
 
-### 3.5 `setup-projects.sh` (Gestionnaire de Modules à la Carte)
+### 4.5 `setup-projects.sh` (Gestionnaire de Modules à la Carte)
 * **Support du Drapeau `--module <nom>` :**
   - `--module tokenwatcher-topbar` : Clône `tokenwatcher-topbar`, installe Astra Monitor, déploie l'extension GNOME Shell TopBar et active `tokenwatcher.service`.
   - `--module tokenwatcher-widget` : Clône `TokenWatcherWidget` et déploie le cockpit dashboard WebGL/HTML5.
@@ -106,7 +132,7 @@ L'ensemble des composants communique via des ports réseau isolés et configurab
   - `--module dj-mix` : Clône `DJ-Mix-Local-AI-Project` et configure le FastMCP Server.
   - `--all-modules` : Installe l'ensemble des modules applicatifs.
 
-### 3.6 `localAI-check-status.sh` (Diagnostic & Bilan de Santé Adaptatif)
+### 4.6 `localAI-check-status.sh` (Diagnostic & Bilan de Santé Adaptatif)
 * **Bilan Visuel Couleur (🟢 OK / 🔴 KO) :**
   - Moteur Lemonade (Port 13305 / 8001 / 8002).
   - Moteur vLLM (Port 8000).
@@ -117,9 +143,9 @@ L'ensemble des composants communique via des ports réseau isolés et configurab
 
 ---
 
-## 📋 4. MATRICES COMPLÈTES DES OPTIONS CLI PAR SCRIPT
+## 📋 5. MATRICES COMPLÈTES DES OPTIONS CLI PAR SCRIPT
 
-### 4.1 Matrice des Options du Script `setup-from-scratch.sh`
+### 5.1 Matrice des Options du Script `setup-from-scratch.sh`
 
 | Option CLI | Type | Valeur par Défaut | Description & Action |
 | :--- | :--- | :--- | :--- |
@@ -138,7 +164,7 @@ L'ensemble des composants communique via des ports réseau isolés et configurab
 | **`--proxy-port <port>`** | Port | **`13306`** | Définit le port d'écoute du proxy Python `lemonade-opencode-proxy.py` pour OpenCode CLI. |
 | **`--webui-port <port>`** | Port | **`8082`** | Définit le port d'écoute du conteneur/service Open WebUI. |
 
-### 4.2 Matrice des Options du Script `Deploy-Hermes-Perso-data.sh`
+### 5.2 Matrice des Options du Script `Deploy-Hermes-Perso-data.sh`
 
 | Option CLI | Type | Valeur par Défaut | Description & Action |
 | :--- | :--- | :--- | :--- |
@@ -146,7 +172,7 @@ L'ensemble des composants communique via des ports réseau isolés et configurab
 | **`export`** | Action | Optionnel | Compresse et exporte `state.db` et `skills/` vers la clé USB (`/LLM-backups/Hermes-data`). |
 | **`--profile <nom>`** / **`-p <nom>`** | Profil | `amd-tk` | Spécifie le nom du profil Hermes à restaurer ou exporter. |
 
-### 4.3 Matrice des Options du Script `setup-projects.sh`
+### 5.3 Matrice des Options du Script `setup-projects.sh`
 
 | Option CLI | Type | Valeur par Défaut | Description & Action |
 | :--- | :--- | :--- | :--- |
@@ -158,7 +184,7 @@ L'ensemble des composants communique via des ports réseau isolés et configurab
 | **`--module dj-mix`** | Module | Optionnel | Clône `DJ-Mix-Local-AI-Project` et configure le FastMCP Server. |
 | **`--all-modules`** / **`--all`** | Restauration | `false` | Restaure l'ensemble des modules applicatifs. |
 
-### 4.4 Matrice des Options du Script `download-models.sh`
+### 5.4 Matrice des Options du Script `download-models.sh`
 
 | Option CLI | Type | Valeur par Défaut | Description & Action |
 | :--- | :--- | :--- | :--- |
@@ -170,9 +196,9 @@ L'ensemble des composants communique via des ports réseau isolés et configurab
 
 ---
 
-## 🐳 5. STRATÉGIE & ARCHITECTURE DOCKER
+## 🐳 6. STRATÉGIE & ARCHITECTURE DOCKER
 
-### 5.1 Architecture, Setup et Configuration de Docker
+### 6.1 Architecture, Setup et Configuration de Docker
 
 Le déploiement de Docker repose sur un moteur conteneurisé moderne, isolé et entièrement personnalisable via les scripts d'infrastructure (`setup.sh` et `setup-docker-projects.sh`) :
 
@@ -201,7 +227,7 @@ Le déploiement de Docker repose sur un moteur conteneurisé moderne, isolé et 
    }
    ```
 
-### 5.2 Comportement selon le Cas d'Usage (Use Case Matrix)
+### 6.2 Comportement selon le Cas d'Usage (Use Case Matrix)
 
 | Cas d'Usage Exécuté | Commande CLI | Comportement & Services Docker Déployés |
 | :--- | :--- | :--- |
@@ -213,7 +239,7 @@ Le déploiement de Docker repose sur un moteur conteneurisé moderne, isolé et 
 
 ---
 
-## 💻 6. EXEMPLES DE COMMANDES DE DÉPLOIEMENT
+## 💻 7. EXEMPLES DE COMMANDES DE DÉPLOIEMENT
 
 ### 🚀 A. OpenCode + Lemonade + Docker SANS vLLM (Votre Cas Spécifique) :
 ```bash
@@ -248,7 +274,7 @@ sudo ./setup-from-scratch.sh \
 
 ---
 
-## 🛠️ 7. MATRICE DE RÉSOLUTION DES PROBLÈMES FREQUENTS
+## 🛠️ 8. MATRICE DE RÉSOLUTION DES PROBLÈMES FREQUENTS
 
 | Symptôme / Message d'Erreur | Cause Racine | Solution Appliquée |
 | :--- | :--- | :--- |
@@ -259,7 +285,7 @@ sudo ./setup-from-scratch.sh \
 
 ---
 
-## 📁 8. ARBORESCENCE DU DÉPÔT CENTRALISÉ (`local-ai-workstation-setup`)
+## 📁 9. ARBORESCENCE DU DÉPÔT CENTRALISÉ (`local-ai-workstation-setup`)
 
 ```text
 local-ai-workstation-setup/
