@@ -105,6 +105,23 @@ install_tokenwatcher_topbar() {
 install_tokenwatcher_widget() {
     echo "📦 [Module] Installing TokenWatcher Widget Cockpit..."
     clone_repo "https://github.com/ThomasK2020/TokenWatcherWidget.git" "TokenWatcherWidget"
+    if [ -d "TokenWatcherWidget" ]; then
+        local widget_target="TokenWatcherWidget"
+        [ -d "TokenWatcherWidget/Widget" ] && widget_target="TokenWatcherWidget/Widget"
+        /usr/bin/python3 -m venv --system-site-packages "${widget_target}/.venv" 2>/dev/null || true
+        if [ ! -f "/usr/lib/x86_64-linux-gnu/girepository-1.0/WebKit-6.0.typelib" ] && [ ! -f "${HOME}/.local/lib/girepository-1.0/WebKit-6.0.typelib" ]; then
+            mkdir -p /tmp/gir_dl "${HOME}/.local/lib/girepository-1.0"
+            (
+                cd /tmp/gir_dl
+                apt-get download gir1.2-webkit-6.0 gir1.2-javascriptcoregtk-6.0 2>/dev/null || true
+                for deb in *.deb; do
+                    [ -f "$deb" ] && dpkg-deb -x "$deb" /tmp/gir_dl/extracted
+                done
+                cp -f /tmp/gir_dl/extracted/usr/lib/x86_64-linux-gnu/girepository-1.0/*.typelib "${HOME}/.local/lib/girepository-1.0/" 2>/dev/null || true
+            )
+            rm -rf /tmp/gir_dl
+        fi
+    fi
     echo "✅ TokenWatcher Widget Cockpit restored in ${PROJECTS_DIR}/TokenWatcherWidget!"
 }
 

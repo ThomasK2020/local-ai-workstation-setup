@@ -88,7 +88,7 @@ echo "✅ Configuration files synchronized from GitHub!"
 echo "======================================================================"
 echo "🚀 [Step 2/8] System Dependencies, Python Tooling, Node.js 22 LTS & Chrome"
 echo "======================================================================"
-apt-get update -y && apt-get install -y curl git jq python3 python3-pip python3-venv python3-full pipx build-essential libffi-dev ufw mesa-vulkan-drivers ca-certificates gnupg
+apt-get update -y && apt-get install -y curl git jq python3 python3-pip python3-venv python3-full python3-gi python3-yaml gir1.2-gtk-4.0 gir1.2-webkit-6.0 gir1.2-javascriptcoregtk-6.0 libwebkitgtk-6.0-4 lm-sensors pipx build-essential libffi-dev ufw mesa-vulkan-drivers ca-certificates gnupg
 
 # Install Google Chrome Stable for host-level interactive SSO login (Flatfox, etc.)
 if ! command -v google-chrome &>/dev/null; then
