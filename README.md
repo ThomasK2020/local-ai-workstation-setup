@@ -8,7 +8,7 @@ Automated deployment kit and configuration files for multi-station local AI arch
 | :--- | :--- | :--- |
 | **`setup.sh`** | **Infrastructure Système Root :** Moteur Docker officiel, Google Chrome Stable (SSO Flatfox), Node.js 22 LTS, Snap Lemonade/vLLM, comptes & pare-feu UFW. | `sudo ./setup.sh` |
 | **`setup-user.sh`** | **Session Utilisateur Démo :** Profil `LocalAIDemoUser`, OpenCode CLI, `.env` neutre, fix du PATH. | `bash setup-user.sh` |
-| **`setup-projects.sh`** | **Clonage Projets Git :** `gh auth setup-git`, `zurich-rental-flatfox-agent`, venv Python. | `bash setup-projects.sh` |
+| **`setup-projects.sh`** | **Gestionnaire de Modules Git (Opt-in) :** Aucun projet installé par défaut ; sélection via `--module <nom>`, `--modules a,b` ou `--all`. | `bash setup-projects.sh --module <nom>` |
 | **`setup-docker-projects.sh`** | **Lancement Conteneurs Docker :** Services `flatfox`, `astra-monitor`, `pirates-bay`. | `bash setup-docker-projects.sh` |
 | **`backup-models.sh`** | **Import/Export Modèles LLM USB :** Sauvegarde et réimportation hors-ligne (Pack 32 Go vs 58 Go). | `./backup-models.sh` |
 | **`sync-configs.sh`** | **Sauvegarde Configurations IA :** Sauvegarde Hermes (profils lively-tk, perso, amd), Lemonade & OpenCode. | `./sync-configs.sh` |
@@ -33,6 +33,7 @@ Access full, pre-formatted documentation directly online from any web browser or
 | :--- | :--- | :--- | :--- | :--- |
 | **`local-ai-workstation-setup`** | [ThomasK2020/local-ai-workstation-setup](https://github.com/ThomasK2020/local-ai-workstation-setup) | **Public** | `~/local-ai-workstation-setup` | Kit de déploiement et scripts d'installation automatisés de la station IA. |
 | **`tokenwatcher-topbar`** | [ThomasK2020/tokenwatcher-topbar](https://github.com/ThomasK2020/tokenwatcher-topbar) | **Public** | `~/Projects/tokenwatcher-topbar` | Extension GNOME TopBar pour le suivi VRAM/tokens LLM en temps réel. |
+| **`TokenWatcherWidget`** | [ThomasK2020/TokenWatcherWidget](https://github.com/ThomasK2020/TokenWatcherWidget) | **Public** | `~/Projects/TokenWatcherWidget` | Cockpit GTK4/WebKit6 V4.1.0 multi-moteurs & quotas Cloud (prod / `--preprod`). |
 | **`zurich-rental-flatfox-agent`** | [ThomasK2020/zurich-rental-flatfox-agent](https://github.com/ThomasK2020/zurich-rental-flatfox-agent) | **Privé** | `~/Projects/zurich-rental-flatfox-agent` | Agent de recherche immobilière Flatfox (Docker, Playwright & dashboard). |
 | **`TK-Hermes-data`** | [ThomasK2020/TK-Hermes-data](https://github.com/ThomasK2020/TK-Hermes-data) | **Privé** | *(Dépôt distant system/data)* | Sauvegarde chiffrée/partionnée des données système et sessions Hermes. |
 | **`pirates_bay_local_coding`** | *N/A (Généré par script)* | **Local** | `~/Projects/pirates_bay_local_coding` | Espace de travail / bac à sable local pour l'exécution d'OpenCode et Docker. |
@@ -65,9 +66,13 @@ sudo ./setup.sh --with-hermes
 bash setup-user.sh --reset-demo
 ```
 
-#### 3. Restauration des Projets Git
+#### 3. Restauration sélective des Projets Git (opt-in — aucun projet installé par défaut)
 ```bash
-bash setup-projects.sh
+# Lister les modules disponibles : bash setup-projects.sh --help
+# Installer un ou plusieurs modules nommés :
+bash setup-projects.sh --module tokenwatcher-widget --module tokenwatcher-topbar
+# Ou restaurer tous les modules :
+bash setup-projects.sh --all
 ```
 
 #### 4. Lancement des Conteneurs Docker Compose

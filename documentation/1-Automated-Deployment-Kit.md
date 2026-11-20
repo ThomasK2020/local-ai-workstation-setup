@@ -682,12 +682,13 @@ Chaque projet conteneurisé (`zurich-rental-flatfox-agent`, `astra-monitor-plugi
 
 ---
 
-## 10. Script 5 : Restauration Projets & GitHub (`setup-projects.sh`)
+## 10. Script 5 : Restauration sélective Projets & GitHub (`setup-projects.sh`)
 
-### 10.1 Dynamic Workspace Path (`PROJECTS_DIR="${HOME}/Projects"`)
-Pour éviter le codage en dur de chemins absolus spécifiques à une seule machine (comme `/home/HP-AMD-LocalAI/`), tous les scripts de déploiement utilisent la variable dynamique Bash `${HOME}` :
-* **Initialisation :** `PROJECTS_DIR="${HOME}/Projects"`
-* **Utilisation :** Le script crée dynamiquement le sous-dossier `Projects` dans la session de l'utilisateur actif (`mkdir -p "${PROJECTS_DIR}"`), se positionne dedans (`cd "${PROJECTS_DIR}"`), puis y clone et orchestre l'ensemble des projets GitHub (`flatfox`, `astra-monitor`, `pirates-bay`). Cela garantit la portabilité totale du kit de déploiement sur n'importe quel compte utilisateur Linux.
+### 10.1 Dynamic Workspace Path (`PROJECTS_DIR="${HOME}/Projects"`) & Opt-in strict
+Pour éviter le codage en dur de chemins absolus spécifiques à une seule machine (comme `/home/HP-AMD-LocalAI/`), tous les scripts de déploiement utilisent la variable dynamique Bash `${HOME}`.
+* **Aucun projet installé par défaut :** Exécuté sans argument (`bash setup-projects.sh`), le script n'installe aucun dépôt et affiche la liste des modules disponibles.
+* **Sélection explicite :** Utiliser `--module <nom>` (répétable), `--modules <a,b>` ou `--all` (`tokenwatcher-topbar`, `tokenwatcher-widget`, `flatfox`, `pirates-bay`, `dj-mix`).
+* **Module `tokenwatcher-widget` (V4.1.0) :** Clône `TokenWatcherWidget`, installe les typelibs WebKit-6.0 si absentes, exécute `./scripts/install_local_widget.sh` (`.venv` hybride, unités `systemd --user` portables, lanceur `.desktop`) et active `tokenwatcher-daemon.service`.
 
 ```bash
 #!/usr/bin/env bash

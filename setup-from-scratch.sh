@@ -18,7 +18,8 @@ WITH_HERMES=true
 PROFILE_NAME="amd-tk"
 SETUP_OPENCODE=false
 SETUP_PROJECTS=false
-MODULE_FLAG=""
+SETUP_ALL_PROJECTS=false
+MODULE_FLAGS=()
 CUSTOM_MODEL=""
 ENGINE_FLAG="--lemonade"
 DOCKER_SUBNET="172.28.0.0/16"
@@ -38,8 +39,8 @@ show_help() {
     echo "  --vllm, --engine-vllm               Use vLLM Server Engine (Port 8000)"
     echo "  --both-engines, --dual-engine       Install BOTH Lemonade (13305) AND vLLM (8000) engines"
     echo "  --setup-opencode, --with-opencode   [Opt-in] Install and configure OpenCode CLI"
-    echo "  --setup-projects, --with-projects   [Opt-in] Clone application repositories & launch Docker"
-    echo "  --module <name>                     [Opt-in] Install single module (tokenwatcher-topbar, tokenwatcher-widget, flatfox, pirates-bay, dj-mix)"
+    echo "  --setup-projects, --with-projects   [Opt-in] Clone ALL application repositories & launch Docker"
+    echo "  --module <name>                     [Opt-in] Install module(s) (repeatable/comma-separated: tokenwatcher-topbar, tokenwatcher-widget, flatfox, pirates-bay, dj-mix)"
     echo "  --model <id_or_url>                 Download custom Hugging Face model ID or direct URL"
     echo "  --docker-subnet <CIDR>              Set custom Docker address pool CIDR (default: 172.28.0.0/16)"
     echo "  --usb-import <path>                 Import models offline from USB directory"
@@ -67,10 +68,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         --setup-projects|--with-projects)
             SETUP_PROJECTS=true
+            SETUP_ALL_PROJECTS=true
             shift
             ;;
-        --module)
-            MODULE_FLAG="$2"
+        --module|--modules)
+            MODULE_FLAGS+=("$2")
             SETUP_PROJECTS=true
             shift 2
             ;;
@@ -158,23 +160,36 @@ else
     echo "ℹ️ Skipping OpenCode CLI setup (use --setup-opencode to enable)."
 fi
 
-# Step 4 & 5: Restore Projects & Docker Containers (Opt-In)
+# Step 4 & 5: Restore Projects & Docker Containers (Opt-In; NO projects installed by default)
 if [ "$SETUP_PROJECTS" = true ]; then
     echo "======================================================================"
     echo "📦 [Step 4/6] Restoring Application Repositories..."
     echo "======================================================================"
     PROJECT_ARGS=()
-    if [ -n "${MODULE_FLAG}" ]; then
-        PROJECT_ARGS+=("--module" "${MODULE_FLAG}")
+    NEED_DOCKER_PROJECTS=false
+    if [ "$SETUP_ALL_PROJECTS" = true ] && [ ${#MODULE_FLAGS[@]} -eq 0 ]; then
+        PROJECT_ARGS+=("--all")
+        NEED_DOCKER_PROJECTS=true
+    else
+        for mf in "${MODULE_FLAGS[@]}"; do
+            PROJECT_ARGS+=("--module" "${mf}")
+            case ",${mf}," in
+                *,flatfox,*|*,pirates-bay,*|*,piratesbay,*) NEED_DOCKER_PROJECTS=true ;;
+            esac
+        done
     fi
     sudo -u "${REAL_USER}" bash "${SETUP_DIR}/setup-projects.sh" "${PROJECT_ARGS[@]+"${PROJECT_ARGS[@]}"}"
 
-    echo "======================================================================"
-    echo "🐳 [Step 5/6] Deploying Dockerized Projects..."
-    echo "======================================================================"
-    bash "${SETUP_DIR}/setup-docker-projects.sh"
+    if [ "$NEED_DOCKER_PROJECTS" = true ]; then
+        echo "======================================================================"
+        echo "🐳 [Step 5/6] Deploying Dockerized Projects..."
+        echo "======================================================================"
+        bash "${SETUP_DIR}/setup-docker-projects.sh"
+    else
+        echo "ℹ️ Skipping Dockerized app containers (no Docker project module selected)."
+    fi
 else
-    echo "ℹ️ Skipping Projects & Docker containers (use --setup-projects or --module <name> to enable)."
+    echo "ℹ️ Skipping Projects & Docker containers (default: no projects installed; use --setup-projects or --module <name>)."
 fi
 
 # Step 6: Diagnostic & Final Health Check

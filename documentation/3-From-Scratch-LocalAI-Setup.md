@@ -205,18 +205,20 @@ bash ~/TK-Hermes-data/setup-hermes-perso.sh
 
 ---
 
-## 📦 Étape 4 : Restauration des Projets GitHub & Authentification (`setup-projects.sh`)
+## 📦 Étape 4 : Restauration sélective des Projets GitHub (`setup-projects.sh`)
 
 ```bash
-# Authentification GitHub et restauration des dépôts de code
-bash setup-projects.sh
+# Par défaut sans drapeau, aucun projet n'est installé (opt-in explicite)
+bash setup-projects.sh --module tokenwatcher-widget --module tokenwatcher-topbar
+# Ou tout installer :
+bash setup-projects.sh --all
 ```
 
 ### Ce que réalise `setup-projects.sh` :
-1. **Authentification GitHub CLI :** Vérifie `gh auth status` ou déclenche `gh auth login` interactif.
-2. **Espace de Travail Dynamique :** Crée le répertoire `${HOME}/Projects/`.
-3. **Clonage des Dépôts :** Clone automatiquement `zurich-rental-flatfox-agent` et initialise `pirates_bay_local_coding`.
-4. **Environnement Virtuel Python :** Crée le `venv` local pour le projet Flatfox et installe les paquets `requirements.txt`.
+1. **Opt-in strict :** Sans `--module`, `--modules` ni `--all`, aucun dépôt n'est cloné.
+2. **Authentification GitHub CLI :** Vérifie `gh auth status` ou configure `gh auth setup-git`.
+3. **Espace de Travail Dynamique :** Crée le répertoire `${HOME}/Projects/`.
+4. **Modules disponibles :** `tokenwatcher-topbar`, `tokenwatcher-widget` (Cockpit V4.1.0 GTK4/WebKit6 + `install_local_widget.sh` + `tokenwatcher-daemon.service`), `flatfox`, `pirates-bay`, `dj-mix`.
 
 ---
 

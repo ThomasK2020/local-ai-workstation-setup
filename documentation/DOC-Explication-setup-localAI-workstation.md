@@ -124,13 +124,14 @@ L'ensemble des composants communique via des ports réseau isolés. Le tableau c
 * **Support Modèles Custom :** Accepte le drapeau `--model <id_ou_url_hf>`.
 
 ### 4.5 `setup-projects.sh` (Gestionnaire de Modules à la Carte)
-* **Support du Drapeau `--module <nom>` :**
+* **Opt-in strict par défaut :** Exécuté sans drapeau (`bash setup-projects.sh`), **aucun projet n'est installé** (affiche l'aide/liste des modules et quitte proprement).
+* **Support multi-modules (`--module <nom>` répétable ou `--modules <a,b>`) :**
   - `--module tokenwatcher-topbar` : Clône `tokenwatcher-topbar`, installe Astra Monitor, déploie l'extension GNOME Shell TopBar et active `tokenwatcher.service`.
-  - `--module tokenwatcher-widget` : Clône `TokenWatcherWidget` et déploie le cockpit dashboard WebGL/HTML5.
-  - `--module flatfox` : Clône `zurich-rental-flatfox-agent`, configure Google Chrome SSO et démarre le conteneur Docker.
-  - `--module pirates-bay` : Clône `PiratesBayLocalAI` et démarre le bac à sable Docker (`pirates-bay-sandbox`).
+  - `--module tokenwatcher-widget` : Clône `TokenWatcherWidget`, installe les typelibs WebKit-6.0 utilisateur si absentes, exécute `./scripts/install_local_widget.sh` (venv + services `systemd --user` + lanceur GNOME V4.1.0) et active `tokenwatcher-daemon.service`.
+  - `--module flatfox` : Clône `zurich-rental-flatfox-agent`, configure Google Chrome SSO et prépare le conteneur Docker.
+  - `--module pirates-bay` : Clône `PiratesBayLocalAI` et prépare le bac à sable Docker (`pirates-bay-sandbox`).
   - `--module dj-mix` : Clône `DJ-Mix-Local-AI-Project` et configure le FastMCP Server.
-  - `--all-modules` : Installe l'ensemble des modules applicatifs.
+  - `--all-modules` / `--all` : Installe l'ensemble des modules applicatifs.
 
 ### 4.6 `localAI-check-status.sh` (Diagnostic & Bilan de Santé Adaptatif)
 * **Bilan Visuel Couleur (🟢 OK / 🔴 KO) :**
@@ -156,8 +157,8 @@ L'ensemble des composants communique via des ports réseau isolés. Le tableau c
 | **`--vllm`** | Moteur | Optionnel | Active le moteur vLLM Server sur GPU (Serveur HP Z6 Multi-GPU). |
 | **`--both-engines`** / **`--dual-engine`** | Moteur | Optionnel | Déploie **simultanément Lemonade (13305) ET vLLM (8000)** pour démos/comparatifs. |
 | **`--setup-opencode`** / **`--with-opencode`** | Opt-in | `false` (Non installé) | **[Opt-in]** Active l'installation et la configuration d'OpenCode CLI. |
-| **`--setup-projects`** / **`--with-projects`** | Opt-in | `false` (Non installé) | **[Opt-in]** Active le clonage des dépôts applicatifs Git et des conteneurs Docker. |
-| **`--module <nom>`** | Module | Aucun | Installe sélectivement un module (`tokenwatcher-topbar`, `tokenwatcher-widget`, `flatfox`, `pirates-bay`, `dj-mix`). |
+| **`--setup-projects`** / **`--with-projects`** | Opt-in | `false` (Non installé) | **[Opt-in]** Active le clonage de tous les dépôts applicatifs Git (`--all`) et des conteneurs Docker. |
+| **`--module <nom>`** / **`--modules`** | Module | Aucun | Installe sélectivement un ou plusieurs modules (répétable ou séparés par virgules : `tokenwatcher-topbar`, `tokenwatcher-widget`, `flatfox`, `pirates-bay`, `dj-mix`). |
 | **`--model <id_ou_url>`** | Modèle | Modèles défaut | Spécifie un modèle LLM personnalisé ou une URL Hugging Face directe. |
 | **`--usb-import <chemin_USB>`** | Import | Aucun (Download en ligne) | Active l'importation hors-ligne des modèles LLM depuis la clé USB. |
 | **`--docker-subnet <cidr>`** | Réseau | **`172.28.0.0/16`** | Variabilise la plage de réseau conteneurisée sous-jacente pour Docker. |
@@ -176,12 +177,14 @@ L'ensemble des composants communique via des ports réseau isolés. Le tableau c
 
 | Option CLI | Type | Valeur par Défaut | Description & Action |
 | :--- | :--- | :--- | :--- |
+| *(aucune option)* | Défaut | **Aucun projet** | N'installe aucun dépôt ni service ; affiche les modules disponibles et quitte. |
 | **`-h`** / **`--help`** | Aide | - | Affiche l'aide CLI détaillée avec la liste des modules disponibles. |
 | **`--module tokenwatcher-topbar`** | Module | Optionnel | Clône `tokenwatcher-topbar`, installe Astra Monitor, déploie l'extension GNOME Shell TopBar et active `tokenwatcher.service`. |
-| **`--module tokenwatcher-widget`** | Module | Optionnel | Clône `TokenWatcherWidget` et configure le cockpit dashboard WebGL/HTML5 autonome. |
+| **`--module tokenwatcher-widget`** | Module | Optionnel | Clône `TokenWatcherWidget`, installe les typelibs WebKit-6.0, exécute `scripts/install_local_widget.sh` et active `tokenwatcher-daemon.service` (Cockpit V4.1.0, prod par défaut / `--preprod` optionnel). |
 | **`--module flatfox`** | Module | Optionnel | Clône `zurich-rental-flatfox-agent`, configure Google Chrome SSO et prépare le conteneur Docker. |
 | **`--module pirates-bay`** | Module | Optionnel | Clône `PiratesBayLocalAI` et prépare le bac à sable Docker (`pirates-bay-sandbox`). |
 | **`--module dj-mix`** | Module | Optionnel | Clône `DJ-Mix-Local-AI-Project` et configure le FastMCP Server. |
+| **`--modules <a,b>`** | Multi | Optionnel | Installe une liste de modules séparés par des virgules (ou passer `--module` plusieurs fois). |
 | **`--all-modules`** / **`--all`** | Restauration | `false` | Restaure l'ensemble des modules applicatifs. |
 
 ### 5.4 Matrice des Options du Script `download-models.sh`
@@ -235,7 +238,7 @@ Le déploiement de Docker repose sur un moteur conteneurisé moderne, isolé et 
 | **Cas 2 : Socle Minimal Core (Sans Docker ni Projets)** | `sudo ./setup-from-scratch.sh --lemonade` | Installe Docker Engine mais **ne lance aucun conteneur**. Lemonade et Hermes seuls. |
 | **Cas 3 : Déploiement DUAL-ENGINE de Démo (Lemonade + vLLM + Docker)** | `sudo ./setup-from-scratch.sh --both-engines --setup-projects --webui-port 8082` | Lemonade (`13305`) ET vLLM (`8000`) actifs. Open WebUI connecté au moteur principal. Conteneurs applicatifs lancés. |
 | **Cas 4 : Module TopBar GNOME (`tokenwatcher-topbar`)** | `./setup-projects.sh --module tokenwatcher-topbar` | Ne lance aucun conteneur Docker applicatif. Installe l'extension GNOME Shell TopBar + daemon systemd `tokenwatcher.service`. |
-| **Cas 5 : Module Cockpit Widget (`tokenwatcher-widget`)** | `./setup-projects.sh --module tokenwatcher-widget` | Ne lance aucun conteneur Docker applicatif. Installe le cockpit dashboard WebGL/HTML5 autonome. |
+| **Cas 5 : Module Cockpit Widget (`tokenwatcher-widget`)** | `./setup-projects.sh --module tokenwatcher-widget` | Ne lance aucun conteneur Docker applicatif. Installe TokenWatcher Cockpit V4.1.0 (GTK4/WebKit6, `tokenwatcher-daemon.service`, mode prod par défaut / `--preprod` en test). |
 
 ---
 
@@ -267,9 +270,12 @@ sudo ./setup-from-scratch.sh \
   --setup-projects
 ```
 
-### 🚀 D. Installation à la Carte du Module TokenWatcher TopBar :
+### 🚀 D. Installation à la Carte des Modules TokenWatcher (TopBar & Widget V4.1.0) :
 ```bash
-./setup-projects.sh --module tokenwatcher-topbar
+# Un seul module ou plusieurs modules nommés (aucun projet installé sans drapeau)
+./setup-projects.sh --module tokenwatcher-widget --module tokenwatcher-topbar
+# Ou via setup-from-scratch sans lancer Docker applicatif :
+sudo ./setup-from-scratch.sh --lemonade --module tokenwatcher-widget
 ```
 
 ---

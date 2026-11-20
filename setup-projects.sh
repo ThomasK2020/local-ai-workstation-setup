@@ -5,7 +5,7 @@
 set -euo pipefail
 
 PROJECTS_DIR="${HOME}/Projects"
-SELECTED_MODULE=""
+SELECTED_MODULES=()
 RESTORE_ALL=false
 
 show_help() {
@@ -14,17 +14,30 @@ show_help() {
     echo "======================================================================"
     echo "Usage: bash setup-projects.sh [options]"
     echo ""
+    echo "Default (no options): installs NO projects (explicit opt-in required)."
+    echo ""
     echo "Options:"
     echo "  -h, --help               Show this help message"
-    echo "  --module <name>          Install specific module:"
+    echo "  --module <name>          Install specific module (repeatable or comma-separated):"
     echo "                           - tokenwatcher-topbar (GNOME TopBar Extension + daemon)"
-    echo "                           - tokenwatcher-widget (Standalone Cockpit WebGL Widget)"
-    echo "                           - flatfox            (Zurich Flatfox Rental Search Agent)"
-    echo "                           - pirates-bay        (Pirates Bay Local AI Coding Sandbox)"
-    echo "                           - dj-mix             (DJ Mix Studio AI & Kokoro TTS)"
+    echo "                           - tokenwatcher-widget (Standalone Cockpit GTK4/WebKit6 V4.1.0)"
+    echo "                           - flatfox             (Zurich Flatfox Rental Search Agent)"
+    echo "                           - pirates-bay         (Pirates Bay Local AI Coding Sandbox)"
+    echo "                           - dj-mix              (DJ Mix Studio AI & Kokoro TTS)"
+    echo "  --modules <a,b,...>      Comma-separated list of modules to install"
     echo "  --all-modules, --all     Restore ALL application modules"
     echo ""
     exit 0
+}
+
+add_modules_arg() {
+    local raw="$1"
+    IFS=',' read -ra parts <<< "${raw}"
+    for item in "${parts[@]}"; do
+        item="${item#"${item%%[![:space:]]*}"}"
+        item="${item%"${item##*[![:space:]]}"}"
+        [ -n "${item}" ] && SELECTED_MODULES+=("${item}")
+    done
 }
 
 while [[ $# -gt 0 ]]; do
@@ -32,8 +45,9 @@ while [[ $# -gt 0 ]]; do
         -h|--help)
             show_help
             ;;
-        --module)
-            SELECTED_MODULE="$2"
+        --module|--modules)
+            [ $# -lt 2 ] && { echo "❌ Missing argument for $1" >&2; exit 1; }
+            add_modules_arg "$2"
             shift 2
             ;;
         --all-modules|--all)
@@ -41,14 +55,32 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         *)
+            echo "⚠️ Ignoring unknown option: $1" >&2
             shift
             ;;
     esac
 done
 
-# Default to restoring all if neither --module nor --all specified when called directly
-if [ -z "${SELECTED_MODULE}" ] && [ "${RESTORE_ALL}" = false ]; then
-    RESTORE_ALL=true
+# Default: install NO projects if neither --module/--modules nor --all was specified
+if [ ${#SELECTED_MODULES[@]} -eq 0 ] && [ "${RESTORE_ALL}" = false ]; then
+    echo "ℹ️ No project module specified (--module <name> or --all). Skipping project installation."
+    echo "👉 Available modules: tokenwatcher-topbar, tokenwatcher-widget, flatfox, pirates-bay, dj-mix"
+    echo "👉 Example: bash setup-projects.sh --module tokenwatcher-widget"
+    exit 0
+fi
+
+# Validate module names before touching filesystem or git config
+if [ "${RESTORE_ALL}" = false ]; then
+    for mod in "${SELECTED_MODULES[@]}"; do
+        case "${mod}" in
+            tokenwatcher-topbar|topbar|tokenwatcher-widget|widget|flatfox|pirates-bay|piratesbay|dj-mix|djmix)
+                ;;
+            *)
+                echo "❌ Unknown module '${mod}'. Valid modules: tokenwatcher-topbar, tokenwatcher-widget, flatfox, pirates-bay, dj-mix" >&2
+                exit 1
+                ;;
+        esac
+    done
 fi
 
 mkdir -p "${PROJECTS_DIR}"
@@ -103,12 +135,11 @@ install_tokenwatcher_topbar() {
 }
 
 install_tokenwatcher_widget() {
-    echo "📦 [Module] Installing TokenWatcher Widget Cockpit..."
+    echo "📦 [Module] Installing TokenWatcher Widget Cockpit V4.1.0..."
     clone_repo "https://github.com/ThomasK2020/TokenWatcherWidget.git" "TokenWatcherWidget"
     if [ -d "TokenWatcherWidget" ]; then
         local widget_target="TokenWatcherWidget"
         [ -d "TokenWatcherWidget/Widget" ] && widget_target="TokenWatcherWidget/Widget"
-        /usr/bin/python3 -m venv --system-site-packages "${widget_target}/.venv" 2>/dev/null || true
         if [ ! -f "/usr/lib/x86_64-linux-gnu/girepository-1.0/WebKit-6.0.typelib" ] && [ ! -f "${HOME}/.local/lib/girepository-1.0/WebKit-6.0.typelib" ]; then
             mkdir -p /tmp/gir_dl "${HOME}/.local/lib/girepository-1.0"
             (
@@ -121,8 +152,18 @@ install_tokenwatcher_widget() {
             )
             rm -rf /tmp/gir_dl
         fi
+        if [ -f "${widget_target}/scripts/install_local_widget.sh" ]; then
+            (
+                cd "${widget_target}"
+                chmod +x scripts/*.sh 2>/dev/null || true
+                bash ./scripts/install_local_widget.sh
+            )
+            systemctl --user enable --now tokenwatcher-daemon.service 2>/dev/null || true
+        else
+            /usr/bin/python3 -m venv --system-site-packages "${widget_target}/.venv" 2>/dev/null || true
+        fi
     fi
-    echo "✅ TokenWatcher Widget Cockpit restored in ${PROJECTS_DIR}/TokenWatcherWidget!"
+    echo "✅ TokenWatcher Widget Cockpit installed in ${PROJECTS_DIR}/TokenWatcherWidget!"
 }
 
 install_flatfox() {
@@ -160,28 +201,29 @@ if [ "${RESTORE_ALL}" = true ]; then
     install_pirates_bay
     install_dj_mix
 else
-    case "${SELECTED_MODULE}" in
-        tokenwatcher-topbar|topbar)
-            install_tokenwatcher_topbar
-            ;;
-        tokenwatcher-widget|widget)
-            install_tokenwatcher_widget
-            ;;
-        flatfox)
-            install_flatfox
-            ;;
-        pirates-bay|piratesbay)
-            install_pirates_bay
-            ;;
-        dj-mix|djmix)
-            install_dj_mix
-            ;;
-        *)
-            echo "⚠️ Unknown module '${SELECTED_MODULE}'. Restoring all default modules."
-            install_tokenwatcher_topbar
-            install_flatfox
-            ;;
-    esac
+    for mod in "${SELECTED_MODULES[@]}"; do
+        case "${mod}" in
+            tokenwatcher-topbar|topbar)
+                install_tokenwatcher_topbar
+                ;;
+            tokenwatcher-widget|widget)
+                install_tokenwatcher_widget
+                ;;
+            flatfox)
+                install_flatfox
+                ;;
+            pirates-bay|piratesbay)
+                install_pirates_bay
+                ;;
+            dj-mix|djmix)
+                install_dj_mix
+                ;;
+            *)
+                echo "❌ Unknown module '${mod}'. Valid modules: tokenwatcher-topbar, tokenwatcher-widget, flatfox, pirates-bay, dj-mix" >&2
+                exit 1
+                ;;
+        esac
+    done
 fi
 
 echo "----------------------------------------------------------------------"
